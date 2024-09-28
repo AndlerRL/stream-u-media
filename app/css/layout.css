@@ -1,0 +1,7 @@
+.layout_container {
+  @apply h-[calc(100vh-5rem)] sm:h-screen w-full max-w-screen-sm bg-background text-foreground mx-auto flex flex-col gap-12 items-start justify-center px-3;
+}
+
+.layout_header {
+  @apply bg-background h-16 flex gap-2 px-3;
+}

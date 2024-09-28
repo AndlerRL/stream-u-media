@@ -1,5 +1,5 @@
-import { createAuthClient } from "@/utils/supabase/client";
-import "./globals.css";
+import { createClient } from "@/utils/supabase/server";
+import "./css/globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -13,7 +13,7 @@ export const metadata = {
 
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const supabase = createAuthClient();
+  const supabase = createClient();
 
   const {
     data: { session },
@@ -24,7 +24,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body>
-        <main>
+        <main className="layout_container">
           {children}
         </main>
       </body>
