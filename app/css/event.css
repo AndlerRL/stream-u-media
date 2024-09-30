@@ -1,0 +1,15 @@
+.live-stream-viewer {
+  @apply flex w-full h-full flex-col items-center gap-4;
+
+  & .live-stream {
+    @apply w-full min-h-96 bg-muted/50 flex items-center justify-center;
+  }
+}
+
+.video-recorder {
+  @apply w-full bg-muted/50;
+}
+
+.controls {
+  @apply flex justify-center gap-4 p-5;
+}

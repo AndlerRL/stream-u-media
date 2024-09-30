@@ -2,9 +2,9 @@
   "name": "stream-u-media",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "ts-node --project tsconfig.server.json server/index.ts",
     "build": "next build",
-    "start": "next start"
+    "start": "NODE_ENV=production ts-node --project tsconfig.server.json server/index.ts"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.1.1",
@@ -34,7 +34,9 @@
     "react-qr-reader": "^3.0.0-beta-1",
     "react-slick": "^0.30.2",
     "react-use": "^17.5.1",
-    "slick-carousel": "^1.8.1"
+    "slick-carousel": "^1.8.1",
+    "socket.io": "^4.8.0",
+    "socket.io-client": "^4.8.0"
   },
   "devDependencies": {
     "@types/node": "20.10.6",

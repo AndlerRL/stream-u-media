@@ -1,86 +1,166 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
+import { cn } from '@/utils/cn';
 import { createClient } from '@/utils/supabase/client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { io, Socket } from 'socket.io-client';
 
 interface VideoRecorderProps {
   eventId: number;
   onVideoUploaded: (videoUrl: string) => void;
 }
 
-export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) {
-  const [isRecording, setIsRecording] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [recordingTime, setRecordingTime] = useState(0);
+const VideoRecorder: React.FC<VideoRecorderProps> = ({ eventId, onVideoUploaded }) => {
+  const [isActive, setIsActive] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string>();
   const [error, setError] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const socketRef = useRef<Socket | null>(null);
 
   const supabase = createClient();
 
-  const startRecording = useCallback(async () => {
+  useEffect(() => {
+    socketRef.current = io();
+
+    socketRef.current.on('connect', () => {
+      console.log('Connected to Socket.IO server');
+      socketRef.current?.emit('join-room', eventId);
+    });
+
+    socketRef.current.on('viewer-joined', async (viewerId) => {
+      if (peerConnectionRef.current) {
+        const offer = await peerConnectionRef.current.createOffer();
+        await peerConnectionRef.current.setLocalDescription(offer);
+        socketRef.current?.emit('offer', { roomId: eventId, viewerId, offer });
+      }
+    });
+
+    socketRef.current.on('answer', async (answer) => {
+      try {
+        await peerConnectionRef.current?.setRemoteDescription(new RTCSessionDescription(answer));
+      } catch (err) {
+        console.error('Error setting remote description:', err);
+      }
+    });
+
+    socketRef.current.on('ice-candidate', async (candidate) => {
+      try {
+        await peerConnectionRef.current?.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (err) {
+        console.error('Error adding received ice candidate:', err);
+      }
+    });
+
+    return () => {
+      stopStreamingAndRecording();
+      socketRef.current?.disconnect();
+    };
+  }, [eventId]);
+
+  const startStreamingAndRecording = async () => {
     try {
+      console.log('Starting media stream');
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       streamRef.current = stream;
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        console.log('Local video preview set');
       }
 
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+      console.log('Creating peer connection');
+      peerConnectionRef.current = new RTCPeerConnection({
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          // Comment out TURN server for local testing
+          // {
+          //   urls: 'turn:your-turn-server.com',
+          //   username: 'your-username',
+          //   credential: 'your-credential'
+          // }
+        ]
+      });
 
-      mediaRecorderRef.current = mediaRecorder;
-      setIsRecording(true);
-      setIsPaused(false);
-      setRecordingTime(0);
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          setRecordedChunks((prev) => [...prev, event.data]);
+      peerConnectionRef.current.onicecandidate = (event) => {
+        if (event.candidate) {
+          console.log('Sending ICE candidate');
+          socketRef.current?.emit('ice-candidate', { roomId: eventId, candidate: event.candidate });
         }
       };
 
+      peerConnectionRef.current.oniceconnectionstatechange = () => {
+        console.log('ICE connection state:', peerConnectionRef.current?.iceConnectionState);
+      };
+
+      stream.getTracks().forEach(track => {
+        console.log('Adding track to peer connection', track.kind);
+        peerConnectionRef.current?.addTrack(track, stream);
+      });
+
+      // Verify tracks were added
+      const senders = peerConnectionRef.current.getSenders();
+      console.log('Number of senders:', senders.length);
+      senders.forEach(sender => console.log('Sender track kind:', sender.track?.kind));
+
+      setIsActive(true);
+      console.log('Emitting start-stream event');
+      socketRef.current?.emit('start-stream', eventId);
+
+      // Set up MediaRecorder for local recording
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = createPreview;
+
+      mediaRecorderRef.current = mediaRecorder;
       mediaRecorder.start(1000); // Collect data every second
+
+      setPreviewUrl(undefined); // Clear any existing preview
     } catch (err) {
-      console.error('Error accessing media devices:', err);
-      setError('Failed to access camera and microphone');
+      console.error('Error starting stream and recording:', err);
+      setError('Failed to start streaming and recording');
     }
-  }, []);
+  };
 
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current) {
+  const stopStreamingAndRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
-      setIsRecording(false);
-
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-
-      const blob = new Blob(recordedChunks, { type: 'video/webm' });
-      const url = URL.createObjectURL(blob);
-      setPreviewUrl(url);
     }
-  }, [recordedChunks]);
-
-  const togglePause = useCallback(() => {
-    if (mediaRecorderRef.current) {
-      if (isPaused) {
-        mediaRecorderRef.current.resume();
-      } else {
-        mediaRecorderRef.current.pause();
-      }
-      setIsPaused(!isPaused);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
     }
-  }, [isPaused]);
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+    }
+    setIsActive(false);
+    socketRef.current?.emit('end-stream', eventId);
+  };
 
-  const uploadVideo = useCallback(async () => {
-    if (recordedChunks.length === 0) return;
+  const createPreview = () => {
+    const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    console.log('previewLink created: ', url)
+    setPreviewUrl(url);
+  };
 
-    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+  const uploadVideo = async () => {
+    if (chunksRef.current.length === 0) {
+      setError('No recorded data available');
+      return;
+    }
+
+    const blob = new Blob(chunksRef.current, { type: 'video/webm' });
     const file = new File([blob], `event_${eventId}_${Date.now()}.webm`, { type: 'video/webm' });
 
     try {
@@ -90,70 +170,56 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
 
       if (error) throw error;
 
-      const { data: { publicUrl }, error: urlError } = supabase.storage
+      const { data: { publicUrl } } = supabase.storage
         .from('videos')
         .getPublicUrl(data.path);
 
-      if (urlError) throw urlError;
-
       onVideoUploaded(publicUrl);
-      setRecordedChunks([]);
-      setPreviewUrl(null);
+      chunksRef.current = []; // Clear chunks after successful upload
     } catch (err) {
       console.error('Error uploading video:', err);
       setError('Failed to upload video');
     }
-  }, [eventId, recordedChunks, supabase, onVideoUploaded]);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-
-    if (isRecording && !isPaused) {
-      interval = setInterval(() => {
-        setRecordingTime((prevTime) => prevTime + 1);
-      }, 1000);
-    }
-
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
-  }, [isRecording, isPaused]);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
     <div className="video-recorder">
       {error && <div className="error">{error}</div>}
 
-      <video ref={videoRef} autoPlay muted playsInline className="video-preview" />
-
-      {previewUrl && (
-        <video src={previewUrl} controls className="recorded-preview" />
-      )}
+      <video
+        className={cn('video-preview', { 'hidden': previewUrl && !isActive })}
+        ref={videoRef}
+        playsInline
+        autoPlay
+        muted
+      />
+      <video
+        className={cn('video-preview', { 'hidden': isActive })}
+        src={previewUrl}
+        controls
+      />
 
       <div className="controls">
-        {!isRecording && !previewUrl && (
-          <button onClick={startRecording}>Start Recording</button>
-        )}
-        {isRecording && (
+        {!isActive ? (
           <>
-            <button onClick={stopRecording}>Stop Recording</button>
-            <button onClick={togglePause}>
-              {isPaused ? 'Resume' : 'Pause'}
-            </button>
-            <div className="recording-time">{formatTime(recordingTime)}</div>
+            <Button onClick={startStreamingAndRecording}>Start Streaming and Recording</Button>
+            {previewUrl && <Button onClick={uploadVideo}>Upload video</Button>}
           </>
-        )}
-        {previewUrl && (
-          <button onClick={uploadVideo}>Upload Video</button>
+        ) : (
+          <Button onClick={stopStreamingAndRecording}>Stop Streaming and Recording</Button>
         )}
       </div>
-    </div>
+    </div >
   );
 };
+
+// time in milliseconds
+function videoCounter(time: number) {
+  const seconds = time / 1000;
+  const minutes = Math.floor(seconds / 60).toFixed(2);
+  const remainingSeconds = (seconds % 60).toFixed(2);
+  return <div className="video-counter">{`${minutes}:${remainingSeconds}`}</div>;
+};
+
+
+export default VideoRecorder;
