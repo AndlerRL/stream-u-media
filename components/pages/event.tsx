@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button';
-import VideoRecorder from '@/components/video-recorder';
+import { VideoRecorder } from '@/components/video-recorder';
 import VideoSlider from '@/components/video-slider';
 import VideoStreamer from '@/components/video-streamer';
 import { createClient } from '@/utils/supabase/client';

@@ -1,3 +1,4 @@
+// vide-streamer.tsx
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -31,12 +32,8 @@ export function VideoStreamer({ eventId }: VideoStreamerProps) {
     peerConnectionRef.current.ontrack = (event) => {
       console.log('Received track', event.track.kind);
       if (videoRef.current && event.streams && event.streams[0]) {
-        console.log('Setting video srcObject');
         videoRef.current.srcObject = event.streams[0];
-        videoRef.current.onloadedmetadata = () => {
-          console.log('Video metadata loaded');
-          videoRef.current!.play().catch(e => console.error('Error playing video:', e));
-        };
+        videoRef.current.play().catch(e => console.error('Error playing video:', e));
       }
     };
 
@@ -68,6 +65,15 @@ export function VideoStreamer({ eventId }: VideoStreamerProps) {
       console.log('Received start-stream event');
       setIsStreaming(true);
       setupPeerConnection();
+    });
+
+    socketRef.current.on('end-stream', () => {
+      console.log('Received end-stream event');
+      setIsStreaming(false);
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.srcObject = null;
+      }
     });
 
     socketRef.current.on('offer', async (offer) => {
@@ -114,7 +120,7 @@ export function VideoStreamer({ eventId }: VideoStreamerProps) {
     <div className="live-stream-viewer">
       {error && <div className="error">{error}</div>}
       <div className="live-stream">
-        {isStreaming ? (
+        {isStreaming || videoRef.current ? (
           <video ref={videoRef} autoPlay playsInline controls />
         ) : (
           <div>Waiting for stream to start...</div>

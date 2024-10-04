@@ -1,3 +1,4 @@
+// streamer.server.ts
 import type { Server } from "http";
 import { Socket, Server as SocketIOServer } from "socket.io";
 
@@ -56,8 +57,9 @@ export class Streamer {
   }
 
   private streamChunk(socket: Socket, { roomId, chunk, ...args }: { roomId: string, chunk: ArrayBuffer }) {
+    console.log(`Received stream-chunk event for room ${roomId}`);
     socket.to(roomId).emit('stream-chunk', chunk);
-    console.log(`User streamed chunk to room ${roomId}. args: `, args);
+    console.log(`Broadcasted stream-chunk event to room ${roomId}`);
   }
 
   private startStream(socket: Socket, roomId: string, ...args: any[]) {
@@ -75,4 +77,3 @@ export class Streamer {
     console.log('User disconnected');
   }
 }
-

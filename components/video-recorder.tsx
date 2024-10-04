@@ -1,9 +1,10 @@
+// video-recorder.tsx
 'use client';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/utils/cn';
 import { createClient } from '@/utils/supabase/client';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 
 interface VideoRecorderProps {
@@ -11,7 +12,7 @@ interface VideoRecorderProps {
   onVideoUploaded: (videoUrl: string) => void;
 }
 
-const VideoRecorder: React.FC<VideoRecorderProps> = ({ eventId, onVideoUploaded }) => {
+export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) {
   const [isActive, setIsActive] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>();
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +39,20 @@ const VideoRecorder: React.FC<VideoRecorderProps> = ({ eventId, onVideoUploaded 
         const offer = await peerConnectionRef.current.createOffer();
         await peerConnectionRef.current.setLocalDescription(offer);
         socketRef.current?.emit('offer', { roomId: eventId, viewerId, offer });
+      }
+    });
+
+    socketRef.current.on('offer', async ({ offer }) => {
+      try {
+        console.log('Received offer:', offer);
+        await peerConnectionRef.current?.setRemoteDescription(new RTCSessionDescription(offer));
+
+        const answer = await peerConnectionRef.current?.createAnswer();
+        await peerConnectionRef.current?.setLocalDescription(answer);
+
+        socketRef.current?.emit('answer', { roomId: eventId, answer });
+      } catch (err) {
+        console.error('Error setting remote description:', err);
       }
     });
 
@@ -220,6 +235,3 @@ function videoCounter(time: number) {
   const remainingSeconds = (seconds % 60).toFixed(2);
   return <div className="video-counter">{`${minutes}:${remainingSeconds}`}</div>;
 };
-
-
-export default VideoRecorder;
