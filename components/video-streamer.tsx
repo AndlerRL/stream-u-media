@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 
 interface VideoStreamerProps {
@@ -16,12 +16,15 @@ export function VideoStreamer({ eventId }: VideoStreamerProps) {
   const sourceBufferRef = useRef<SourceBuffer | null>(null);
   const chunksQueue = useRef<Uint8Array[]>([]);
 
-  const initMediaSource = useCallback(() => {
+  const initMediaSource = () => {
     const mediaSource = new MediaSource()
-    if (videoRef.current) {
-      videoRef.current.src = URL.createObjectURL(mediaSource);
+    mediaSourceRef.current = mediaSource;
+    if (videoRef.current && mediaSourceRef.current) {
+      videoRef.current.src = URL.createObjectURL(mediaSourceRef.current);
     }
-    mediaSource.addEventListener('sourceopen', () => {
+    console.log('Media source initialized', mediaSourceRef.current);
+    console.log('Media source ready state:', mediaSourceRef.current.readyState);
+    mediaSourceRef.current.addEventListener('sourceopen', () => {
       if (mediaSourceRef.current) {
         try {
           sourceBufferRef.current = mediaSourceRef.current.addSourceBuffer('video/webm; codecs="vp9,opus"');
@@ -32,8 +35,7 @@ export function VideoStreamer({ eventId }: VideoStreamerProps) {
         }
       }
     });
-    mediaSourceRef.current = mediaSource;
-  }, [chunksQueue.current.length]);
+  };
 
   const appendNextChunk = () => {
     if (chunksQueue.current.length > 0 && sourceBufferRef.current && !sourceBufferRef.current.updating) {
@@ -57,7 +59,14 @@ export function VideoStreamer({ eventId }: VideoStreamerProps) {
     socketRef.current.on('start-stream', () => {
       console.log('Received start-stream event');
       setIsStreaming(true);
-      initMediaSource();
+
+      const interval = setInterval(() => {
+        if (!mediaSourceRef.current) {
+          initMediaSource();
+        } else {
+          clearInterval(interval)
+        }
+      }, 500)
     });
 
     socketRef.current.on('end-stream', () => {
@@ -72,7 +81,7 @@ export function VideoStreamer({ eventId }: VideoStreamerProps) {
     });
 
     socketRef.current.on('stream-chunk', (chunk: ArrayBuffer) => {
-      console.log('Received stream chunk');
+      console.log('Received stream chunk', chunk);
       const uint8Array = new Uint8Array(chunk);
       chunksQueue.current.push(uint8Array);
       if (sourceBufferRef.current && !sourceBufferRef.current.updating) {
@@ -86,7 +95,7 @@ export function VideoStreamer({ eventId }: VideoStreamerProps) {
       }
       socketRef.current?.disconnect();
     };
-  }, [eventId]);
+  }, [eventId, mediaSourceRef.current?.readyState]);
 
   return (
     <div className="live-stream-viewer">
