@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { VideoRecorder } from '@/components/video-recorder';
 import VideoSlider from '@/components/video-slider';
-import VideoStreamer from '@/components/video-streamer';
+import { VideoStreamer } from '@/components/video-streamer';
 import { createClient } from '@/utils/supabase/client';
 import { useState } from 'react';
 import { useAsync } from 'react-use';

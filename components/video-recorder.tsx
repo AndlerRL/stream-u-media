@@ -1,4 +1,3 @@
-// video-recorder.tsx
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -21,7 +20,6 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
   const streamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const socketRef = useRef<Socket | null>(null);
 
   const supabase = createClient();
@@ -34,30 +32,9 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
       socketRef.current?.emit('join-room', eventId);
     });
 
-    socketRef.current.on('viewer-joined', async (viewerId) => {
-      console.log('Viewer joined, creating offer', viewerId);
-      if (viewerId) {
-        await createAndSendOffer(viewerId);
-      } else {
-        console.error('Received viewer-joined event without viewerId');
-      }
-    });
-
-    socketRef.current.on('answer', async (answer) => {
-      try {
-        console.log('Received answer from viewer');
-        await peerConnectionRef.current?.setRemoteDescription(new RTCSessionDescription(answer));
-      } catch (err) {
-        console.error('Error setting remote description:', err);
-      }
-    });
-
-    socketRef.current.on('ice-candidate', async (candidate) => {
-      try {
-        await peerConnectionRef.current?.addIceCandidate(new RTCIceCandidate(candidate));
-      } catch (err) {
-        console.error('Error adding received ice candidate:', err);
-      }
+    socketRef.current.on('viewer-joined', (viewerId) => {
+      console.log('Viewer joined:', viewerId);
+      // You might want to do something when a viewer joins, like sending initial stream data
     });
 
     return () => {
@@ -65,14 +42,6 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
       socketRef.current?.disconnect();
     };
   }, [eventId]);
-
-  const createAndSendOffer = async (viewerId: string) => {
-    if (peerConnectionRef.current && streamRef.current) {
-      const offer = await peerConnectionRef.current.createOffer();
-      await peerConnectionRef.current.setLocalDescription(offer);
-      socketRef.current?.emit('offer', { roomId: eventId, viewerId, offer });
-    }
-  };
 
   const startStreamingAndRecording = async () => {
     try {
@@ -85,39 +54,24 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
         console.log('Local video preview set');
       }
 
-      console.log('Creating peer connection');
-      peerConnectionRef.current = new RTCPeerConnection({
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-        ]
-      });
-
-      peerConnectionRef.current.onicecandidate = (event) => {
-        if (event.candidate) {
-          console.log('Sending ICE candidate', event.candidate);
-          socketRef.current?.emit('ice-candidate', { roomId: eventId, candidate: event.candidate });
-        }
-      };
-
-      peerConnectionRef.current.oniceconnectionstatechange = () => {
-        console.log('ICE connection state:', peerConnectionRef.current?.iceConnectionState);
-      };
-
-      stream.getTracks().forEach(track => {
-        console.log('Adding track to peer connection', track.kind);
-        peerConnectionRef.current?.addTrack(track, stream);
-      });
-
       setIsActive(true);
       console.log('Emitting start-stream event');
       socketRef.current?.emit('start-stream', eventId);
 
-      // Set up MediaRecorder for local recording
+      // Set up MediaRecorder for local recording and streaming
       const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           chunksRef.current.push(event.data);
+
+          // Send chunk via Socket.IO
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const arrayBuffer = reader.result as ArrayBuffer;
+            socketRef.current?.emit('stream-chunk', { roomId: eventId, chunk: arrayBuffer });
+          };
+          reader.readAsArrayBuffer(event.data);
         }
       };
 
@@ -140,9 +94,6 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
     }
-    if (peerConnectionRef.current) {
-      peerConnectionRef.current.close();
-    }
     setIsActive(false);
     socketRef.current?.emit('end-stream', eventId);
   };
@@ -150,7 +101,7 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
   const createPreview = () => {
     const blob = new Blob(chunksRef.current, { type: 'video/webm' });
     const url = URL.createObjectURL(blob);
-    console.log('previewLink created: ', url)
+    console.log('previewLink created: ', url);
     setPreviewUrl(url);
   };
 
@@ -209,14 +160,8 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
           <Button onClick={stopStreamingAndRecording}>Stop Streaming and Recording</Button>
         )}
       </div>
-    </div >
+    </div>
   );
 };
 
-// time in milliseconds
-function videoCounter(time: number) {
-  const seconds = time / 1000;
-  const minutes = Math.floor(seconds / 60).toFixed(2);
-  const remainingSeconds = (seconds % 60).toFixed(2);
-  return <div className="video-counter">{`${minutes}:${remainingSeconds}`}</div>;
-};
+export default VideoRecorder;

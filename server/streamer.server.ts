@@ -24,34 +24,9 @@ export class Streamer {
 
       socket.on('end-stream', this.endStream.bind(this, socket));
 
-      socket.on('offer', ({ roomId, viewerId, offer }) => {
-        console.log(`Offer from ${socket.id} to ${viewerId} in room ${roomId}`);
-        socket.to(viewerId).emit('offer', offer);
-      });
-
-      socket.on('answer', ({ roomId, answer }) => {
-        console.log(`Answer from ${socket.id} in room ${roomId}`);
-        const streamerId = this.streamers.get(roomId);
-        if (streamerId) {
-          socket.to(streamerId).emit('answer', answer);
-        } else {
-          console.log(`No streamer found for room ${roomId}`);
-        }
-      });
-
-      socket.on('ice-candidate', ({ roomId, candidate }) => {
-        console.log(`ICE candidate from ${socket.id} in room ${roomId}`);
-        socket.to(roomId).emit('ice-candidate', candidate);
-      });
-
-      socket.on('request-offer', ({ roomId }) => {
-        console.log(`Offer requested for room ${roomId}`);
-        const streamerId = this.streamers.get(roomId);
-        if (streamerId) {
-          socket.to(streamerId).emit('viewer-joined', socket.id);
-        } else {
-          console.log(`No streamer found for room ${roomId}`);
-        }
+      socket.on('stream-chunk', ({ roomId, chunk }) => {
+        console.log(`Received stream chunk for room ${roomId}`);
+        socket.to(roomId).emit('stream-chunk', chunk);
       });
 
       socket.on('disconnect', this.disconnect.bind(this, socket));
