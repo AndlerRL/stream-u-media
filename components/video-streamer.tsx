@@ -1,4 +1,4 @@
-// vide-streamer.tsx
+// video-streamer.tsx
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -14,18 +14,18 @@ export function VideoStreamer({ eventId }: VideoStreamerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const socketRef = useRef<Socket | null>(null);
+  const iceCandidatesQueue = useRef<RTCIceCandidate[]>([]);
 
   const setupPeerConnection = () => {
     console.log('Setting up peer connection');
+    if (peerConnectionRef.current && peerConnectionRef.current.connectionState !== 'closed') {
+      console.log('Peer connection already exists and is not closed');
+      return;
+    }
+
     peerConnectionRef.current = new RTCPeerConnection({
       iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
-        // Comment out TURN server for local testing
-        // {
-        //   urls: 'turn:your-turn-server.com',
-        //   username: 'your-username',
-        //   credential: 'your-credential'
-        // }
       ]
     });
 
@@ -50,7 +50,30 @@ export function VideoStreamer({ eventId }: VideoStreamerProps) {
 
     peerConnectionRef.current.onconnectionstatechange = () => {
       console.log('Connection state:', peerConnectionRef.current?.connectionState);
+      if (peerConnectionRef.current?.connectionState === 'failed') {
+        console.log('Connection failed, requesting new offer');
+        requestNewOffer();
+      }
     };
+  };
+
+  const requestNewOffer = () => {
+    console.log('Requesting new offer');
+    socketRef.current?.emit('request-offer', { roomId: eventId });
+  };
+
+  const addIceCandidates = async () => {
+    if (peerConnectionRef.current?.remoteDescription) {
+      while (iceCandidatesQueue.current.length) {
+        const candidate = iceCandidatesQueue.current.shift();
+        try {
+          await peerConnectionRef.current.addIceCandidate(candidate!);
+          console.log('Added queued ICE candidate');
+        } catch (err) {
+          console.error('Error adding queued ICE candidate:', err);
+        }
+      }
+    }
   };
 
   useEffect(() => {
@@ -65,6 +88,7 @@ export function VideoStreamer({ eventId }: VideoStreamerProps) {
       console.log('Received start-stream event');
       setIsStreaming(true);
       setupPeerConnection();
+      requestNewOffer(); // Request an offer when the stream starts
     });
 
     socketRef.current.on('end-stream', () => {
@@ -74,20 +98,25 @@ export function VideoStreamer({ eventId }: VideoStreamerProps) {
         videoRef.current.pause();
         videoRef.current.srcObject = null;
       }
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.close();
+      }
     });
 
     socketRef.current.on('offer', async (offer) => {
       console.log('Received offer from streamer');
       try {
-        if (!peerConnectionRef.current) {
+        setupPeerConnection(); // Ensure peer connection is set up
+
+        if (peerConnectionRef.current?.signalingState === 'closed') {
+          console.log('Peer connection was closed, reinitializing');
           setupPeerConnection();
         }
 
-        console.log('Setting remote description');
         await peerConnectionRef.current!.setRemoteDescription(new RTCSessionDescription(offer));
-        console.log('Creating answer');
+        await addIceCandidates(); // Add any queued ICE candidates
+
         const answer = await peerConnectionRef.current!.createAnswer();
-        console.log('Setting local description');
         await peerConnectionRef.current!.setLocalDescription(answer);
 
         console.log('Sending answer');
@@ -100,11 +129,17 @@ export function VideoStreamer({ eventId }: VideoStreamerProps) {
 
     socketRef.current.on('ice-candidate', async (candidate) => {
       console.log('Received ICE candidate');
-      try {
-        await peerConnectionRef.current?.addIceCandidate(new RTCIceCandidate(candidate));
-        console.log('ICE candidate added successfully');
-      } catch (err) {
-        console.error('Error adding received ice candidate:', err);
+      if (peerConnectionRef.current?.remoteDescription) {
+        try {
+          await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+          console.log('ICE candidate added successfully');
+        } catch (err) {
+          console.error('Error adding received ice candidate:', err);
+        }
+      } else {
+        // Queue the candidate if remote description is not set yet
+        iceCandidatesQueue.current.push(new RTCIceCandidate(candidate));
+        console.log('ICE candidate queued');
       }
     });
 
@@ -115,6 +150,8 @@ export function VideoStreamer({ eventId }: VideoStreamerProps) {
       socketRef.current?.disconnect();
     };
   }, [eventId]);
+
+  // console.log('videoRef.current', videoRef.current)
 
   return (
     <div className="live-stream-viewer">

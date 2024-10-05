@@ -35,29 +35,17 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
     });
 
     socketRef.current.on('viewer-joined', async (viewerId) => {
-      if (peerConnectionRef.current) {
-        const offer = await peerConnectionRef.current.createOffer();
-        await peerConnectionRef.current.setLocalDescription(offer);
-        socketRef.current?.emit('offer', { roomId: eventId, viewerId, offer });
-      }
-    });
-
-    socketRef.current.on('offer', async ({ offer }) => {
-      try {
-        console.log('Received offer:', offer);
-        await peerConnectionRef.current?.setRemoteDescription(new RTCSessionDescription(offer));
-
-        const answer = await peerConnectionRef.current?.createAnswer();
-        await peerConnectionRef.current?.setLocalDescription(answer);
-
-        socketRef.current?.emit('answer', { roomId: eventId, answer });
-      } catch (err) {
-        console.error('Error setting remote description:', err);
+      console.log('Viewer joined, creating offer', viewerId);
+      if (viewerId) {
+        await createAndSendOffer(viewerId);
+      } else {
+        console.error('Received viewer-joined event without viewerId');
       }
     });
 
     socketRef.current.on('answer', async (answer) => {
       try {
+        console.log('Received answer from viewer');
         await peerConnectionRef.current?.setRemoteDescription(new RTCSessionDescription(answer));
       } catch (err) {
         console.error('Error setting remote description:', err);
@@ -78,6 +66,14 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
     };
   }, [eventId]);
 
+  const createAndSendOffer = async (viewerId: string) => {
+    if (peerConnectionRef.current && streamRef.current) {
+      const offer = await peerConnectionRef.current.createOffer();
+      await peerConnectionRef.current.setLocalDescription(offer);
+      socketRef.current?.emit('offer', { roomId: eventId, viewerId, offer });
+    }
+  };
+
   const startStreamingAndRecording = async () => {
     try {
       console.log('Starting media stream');
@@ -93,18 +89,12 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
       peerConnectionRef.current = new RTCPeerConnection({
         iceServers: [
           { urls: 'stun:stun.l.google.com:19302' },
-          // Comment out TURN server for local testing
-          // {
-          //   urls: 'turn:your-turn-server.com',
-          //   username: 'your-username',
-          //   credential: 'your-credential'
-          // }
         ]
       });
 
       peerConnectionRef.current.onicecandidate = (event) => {
         if (event.candidate) {
-          console.log('Sending ICE candidate');
+          console.log('Sending ICE candidate', event.candidate);
           socketRef.current?.emit('ice-candidate', { roomId: eventId, candidate: event.candidate });
         }
       };
@@ -117,11 +107,6 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
         console.log('Adding track to peer connection', track.kind);
         peerConnectionRef.current?.addTrack(track, stream);
       });
-
-      // Verify tracks were added
-      const senders = peerConnectionRef.current.getSenders();
-      console.log('Number of senders:', senders.length);
-      senders.forEach(sender => console.log('Sender track kind:', sender.track?.kind));
 
       setIsActive(true);
       console.log('Emitting start-stream event');

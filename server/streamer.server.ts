@@ -1,4 +1,3 @@
-// streamer.server.ts
 import type { Server } from "http";
 import { Socket, Server as SocketIOServer } from "socket.io";
 
@@ -6,6 +5,7 @@ export class Streamer {
   private server: Server;
   private io: SocketIOServer;
   private socket!: Socket;
+  private streamers: Map<string, string> = new Map(); // roomId -> streamerId
 
   constructor({ server }: { server: Server }) {
     console.log('Streamer is created');
@@ -13,14 +13,12 @@ export class Streamer {
     this.server = server;
     this.io = new SocketIOServer(this.server);
 
-    this.io.on('connection', (socket, ...args) => {
+    this.io.on('connection', (socket) => {
       this.socket = socket;
 
-      console.log('A user connected ', args);
+      console.log('A user connected ', socket.id);
 
       socket.on('join-room', this.joinRoom.bind(this, socket));
-
-      socket.on('stream-chunk', this.streamChunk.bind(this, socket));
 
       socket.on('start-stream', this.startStream.bind(this, socket));
 
@@ -33,7 +31,12 @@ export class Streamer {
 
       socket.on('answer', ({ roomId, answer }) => {
         console.log(`Answer from ${socket.id} in room ${roomId}`);
-        socket.to(roomId).emit('answer', answer);
+        const streamerId = this.streamers.get(roomId);
+        if (streamerId) {
+          socket.to(streamerId).emit('answer', answer);
+        } else {
+          console.log(`No streamer found for room ${roomId}`);
+        }
       });
 
       socket.on('ice-candidate', ({ roomId, candidate }) => {
@@ -41,39 +44,49 @@ export class Streamer {
         socket.to(roomId).emit('ice-candidate', candidate);
       });
 
+      socket.on('request-offer', ({ roomId }) => {
+        console.log(`Offer requested for room ${roomId}`);
+        const streamerId = this.streamers.get(roomId);
+        if (streamerId) {
+          socket.to(streamerId).emit('viewer-joined', socket.id);
+        } else {
+          console.log(`No streamer found for room ${roomId}`);
+        }
+      });
+
       socket.on('disconnect', this.disconnect.bind(this, socket));
     });
   }
 
-  private async joinRoom(socket: Socket, roomId: string, ...args: any[]) {
+  private async joinRoom(socket: Socket, roomId: string) {
     await socket.join(roomId);
-    console.log(`User joined room ${roomId}. args: `, args);
-    socket.to(roomId).emit('viewer-joined', socket.id);
+    console.log(`User ${socket.id} joined room ${roomId}`);
+    const streamerId = this.streamers.get(roomId);
+    if (streamerId && streamerId !== socket.id) {
+      socket.to(streamerId).emit('viewer-joined', socket.id);
+    }
   }
 
-  private async leaveRoom(socket: Socket, roomId: string, ...args: any[]) {
-    await socket.leave(roomId);
-    console.log(`User left room ${roomId}. args: `, args);
-  }
-
-  private streamChunk(socket: Socket, { roomId, chunk, ...args }: { roomId: string, chunk: ArrayBuffer }) {
-    console.log(`Received stream-chunk event for room ${roomId}`);
-    socket.to(roomId).emit('stream-chunk', chunk);
-    console.log(`Broadcasted stream-chunk event to room ${roomId}`);
-  }
-
-  private startStream(socket: Socket, roomId: string, ...args: any[]) {
+  private startStream(socket: Socket, roomId: string) {
+    this.streamers.set(roomId, socket.id);
     socket.to(roomId).emit('start-stream');
-    console.log(`User started stream in room ${roomId}. args: `, args);
+    console.log(`User ${socket.id} started stream in room ${roomId}`);
   }
 
-  private endStream(socket: Socket, roomId: string, ...args: any[]) {
+  private endStream(socket: Socket, roomId: string) {
+    this.streamers.delete(roomId);
     socket.to(roomId).emit('end-stream');
-    console.log(`User ended stream in room ${roomId}. args: `, args);
+    console.log(`User ${socket.id} ended stream in room ${roomId}`);
   }
 
   private disconnect(socket: Socket) {
-    socket.disconnect();
-    console.log('User disconnected');
+    for (const [roomId, streamerId] of this.streamers.entries()) {
+      if (streamerId === socket.id) {
+        this.streamers.delete(roomId);
+        this.io.to(roomId).emit('end-stream');
+        console.log(`Stream ended in room ${roomId} due to disconnection`);
+      }
+    }
+    console.log('User disconnected', socket.id);
   }
 }
