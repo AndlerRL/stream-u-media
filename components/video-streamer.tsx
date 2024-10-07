@@ -22,8 +22,6 @@ export function VideoStreamer({ eventId }: VideoStreamerProps) {
     if (videoRef.current && mediaSourceRef.current) {
       videoRef.current.src = URL.createObjectURL(mediaSourceRef.current);
     }
-    console.log('Media source initialized', mediaSourceRef.current);
-    console.log('Media source ready state:', mediaSourceRef.current.readyState);
     mediaSourceRef.current.addEventListener('sourceopen', () => {
       if (mediaSourceRef.current) {
         try {
@@ -66,7 +64,7 @@ export function VideoStreamer({ eventId }: VideoStreamerProps) {
         } else {
           clearInterval(interval)
         }
-      }, 500)
+      }, 140)
     });
 
     socketRef.current.on('end-stream', () => {
@@ -98,17 +96,13 @@ export function VideoStreamer({ eventId }: VideoStreamerProps) {
   }, [eventId, mediaSourceRef.current?.readyState]);
 
   return (
-    <div className="live-stream-viewer">
+    <>
       {error && <div className="error">{error}</div>}
-      <div className="live-stream">
-        {isStreaming ? (
-          <video ref={videoRef} autoPlay playsInline controls />
-        ) : (
-          <div>Waiting for stream to start...</div>
-        )}
-      </div>
-    </div>
+      {isStreaming ? (
+        <video ref={videoRef} className="video-preview" autoPlay playsInline controls />
+      ) : (
+        <div className="video-preview --no-video">Waiting for stream to start...</div>
+      )}
+    </>
   );
 };
-
-export default VideoStreamer;

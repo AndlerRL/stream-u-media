@@ -1,5 +1,6 @@
 'use client'
 
+import { EventCardDrawer } from '@/components/pages/event-card-drawer';
 import { Button } from '@/components/ui/button';
 import { VideoRecorder } from '@/components/video-recorder';
 import VideoSlider from '@/components/video-slider';
@@ -80,9 +81,7 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
   }
 
   return (
-    <div>
-      <h1>{eventData.name}</h1>
-      <p>{eventData.description}</p>
+    <section className="video-wrapper">
       {videos && videos.length > 0 ? (
         <VideoSlider videos={videos} />
       ) : (
@@ -93,9 +92,12 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
       ) : (
         <>
           <VideoStreamer eventId={eventData.id} />
-          <Button onClick={() => setIsRecording(true)}>Start New Recording</Button>
+          <div className="controls">
+            <Button onClick={() => setIsRecording(true)}>Start New Recording</Button>
+            <EventCardDrawer eventData={eventData} />
+          </div>
         </>
       )}
-    </div>
+    </section>
   );
 }

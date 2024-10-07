@@ -16,7 +16,7 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
   const [previewUrl, setPreviewUrl] = useState<string>();
   const [error, setError] = useState<string | null>(null);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamerVideoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -43,23 +43,27 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
     };
   }, [eventId]);
 
-  const startStreamingAndRecording = async () => {
-    try {
+  useEffect(() => {
+    const startMediaStream = async () => {
       console.log('Starting media stream');
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       streamRef.current = stream;
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        console.log('Local video preview set');
-      }
+      streamerVideoRef.current!.srcObject = stream;
+      console.log('Local video preview set');
+    }
 
+    startMediaStream();
+  }, []);
+
+  const startStreamingAndRecording = async () => {
+    try {
       setIsActive(true);
       console.log('Emitting start-stream event');
       socketRef.current?.emit('start-stream', eventId);
 
       // Set up MediaRecorder for local recording and streaming
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+      const mediaRecorder = new MediaRecorder(streamRef.current!, { mimeType: 'video/webm;codecs=vp9' });
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -134,23 +138,25 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
   };
 
   return (
-    <div className="video-recorder">
+    <>
       {error && <div className="error">{error}</div>}
 
       <video
         className={cn('video-preview', { 'hidden': previewUrl && !isActive })}
-        ref={videoRef}
+        ref={streamerVideoRef}
         playsInline
         autoPlay
         muted
       />
       <video
-        className={cn('video-preview', { 'hidden': isActive })}
+        className={cn('video-preview', { 'hidden': !previewUrl || isActive })}
         src={previewUrl}
         controls
       />
 
       <div className="controls">
+        <CameraControls streamRef={streamRef} />
+
         {!isActive ? (
           <>
             <Button onClick={startStreamingAndRecording}>Start Streaming and Recording</Button>
@@ -160,8 +166,72 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
           <Button onClick={stopStreamingAndRecording}>Stop Streaming and Recording</Button>
         )}
       </div>
-    </div>
+    </>
   );
 };
 
-export default VideoRecorder;
+function CameraControls({ streamRef }: { streamRef: React.RefObject<MediaStream | null> }) {
+  const [flashEnabled, setFlashEnabled] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const navigatorRef = useRef<Navigator>();
+
+  useEffect(() => {
+    if (navigatorRef.current) return;
+
+    navigatorRef.current = navigator;
+  }, [navigatorRef.current]);
+
+  const toggleFlash = () => {
+    setFlashEnabled(!flashEnabled);
+    // Implement flash control logic here
+    navigatorRef.current!.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        const track = stream.getVideoTracks()[0];
+        track.applyConstraints({
+          advanced: [{ torch: flashEnabled }]
+        });
+      });
+  };
+
+  const zoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 0.1, 3)); // Max zoom level 3x
+    // Implement zoom-in logic here
+    navigatorRef.current!.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        const track = stream.getVideoTracks()[0];
+        track.applyConstraints({
+          advanced: [{ zoom: zoomLevel }]
+        });
+      });
+  };
+
+  const zoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 0.1, 1)); // Min zoom level 1x
+    // Implement zoom-out logic here
+    navigatorRef.current!.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        const track = stream.getVideoTracks()[0];
+        track.applyConstraints({
+          advanced: [{ zoom: zoomLevel }]
+        });
+      });
+  };
+
+  const flipCamera = async () => {
+    if (streamRef.current) {
+      const videoTrack = streamRef.current.getVideoTracks()[0];
+      const constraints = videoTrack.getConstraints();
+      constraints.facingMode = constraints.facingMode === 'user' ? 'environment' : 'user';
+      await videoTrack.applyConstraints(constraints);
+    }
+  };
+
+  return (
+    <div className="camera-controls">
+      <Button onClick={toggleFlash}>{flashEnabled ? 'Disable Flash' : 'Enable Flash'}</Button>
+      <Button onClick={zoomIn}>Zoom In</Button>
+      <Button onClick={zoomOut}>Zoom Out</Button>
+      <Button onClick={flipCamera}>Flip Camera</Button>
+    </div>
+  );
+};
