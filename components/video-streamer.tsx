@@ -101,7 +101,7 @@ export function VideoStreamer({ eventId }: VideoStreamerProps) {
       {isStreaming ? (
         <video ref={videoRef} className="video-preview" autoPlay playsInline controls />
       ) : (
-        <div className="video-preview --no-video">Waiting for stream to start...</div>
+        <div className="video-preview video-preview--no-video">Waiting for stream to start...</div>
       )}
     </>
   );

@@ -1,8 +1,11 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { Command, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/utils/cn';
 import { createClient } from '@/utils/supabase/client';
+import { CameraIcon, ChevronDownIcon, SwitchCameraIcon, ZapIcon, ZapOffIcon, ZoomInIcon, ZoomOutIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 
@@ -154,9 +157,16 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
         controls
       />
 
-      <div className="controls">
-        <CameraControls streamRef={streamRef} />
+      <CameraControls streamRef={streamRef} />
 
+      {(previewUrl && !isActive) && (
+        <div className="controls controls--event-details">
+          <h3 className="font-bold">@username</h3>
+          <p className="text-sm">Video description goes here #hashtag</p>
+        </div>
+      )}
+
+      <div className="controls controls--recording">
         {!isActive ? (
           <>
             <Button onClick={startStreamingAndRecording}>Start Streaming and Recording</Button>
@@ -166,12 +176,14 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
           <Button onClick={stopStreamingAndRecording}>Stop Streaming and Recording</Button>
         )}
       </div>
+
     </>
   );
 };
 
 function CameraControls({ streamRef }: { streamRef: React.RefObject<MediaStream | null> }) {
   const [flashEnabled, setFlashEnabled] = useState(false);
+  const [openCameraSettings, setOpenCameraSettings] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
   const navigatorRef = useRef<Navigator>();
 
@@ -226,12 +238,61 @@ function CameraControls({ streamRef }: { streamRef: React.RefObject<MediaStream 
     }
   };
 
+  const cameraOptions = [
+    {
+      label: flashEnabled ? 'disable-flash' : 'enable-flash',
+      icon: flashEnabled ? <ZapOffIcon className="size-6" /> : <ZapIcon className="size-6" />,
+      fnCallback: toggleFlash,
+    },
+    {
+      label: 'zoom-in',
+      icon: <ZoomInIcon className="size-6" />,
+      fnCallback: zoomIn,
+    },
+    {
+      label: 'zoom-out',
+      icon: <ZoomOutIcon className="size-6" />,
+      fnCallback: zoomOut,
+    },
+    {
+      label: 'flip-camera',
+      icon: <SwitchCameraIcon className="size-6" />,
+      fnCallback: flipCamera,
+    },
+  ];
+
   return (
-    <div className="camera-controls">
-      <Button onClick={toggleFlash}>{flashEnabled ? 'Disable Flash' : 'Enable Flash'}</Button>
-      <Button onClick={zoomIn}>Zoom In</Button>
-      <Button onClick={zoomOut}>Zoom Out</Button>
-      <Button onClick={flipCamera}>Flip Camera</Button>
+    <div className="controls controls--camera">
+      <DropdownMenu open={openCameraSettings} onOpenChange={setOpenCameraSettings}>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm">
+            <CameraIcon />
+            <ChevronDownIcon className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-[200px]">
+          <Command>
+            <CommandList>
+              <CommandGroup className="camera-controls">
+                {cameraOptions.map(({ label, fnCallback, icon }) => (
+                  <CommandItem
+                    key={`camera-opt-${label}`}
+                    value={label}
+                    onSelect={(value) => {
+                      fnCallback()
+                    }}
+                  >
+                    <span className="sr-only">
+                      {label.replace('-', ' ')}
+                    </span>
+                    {icon}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };
