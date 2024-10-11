@@ -91,10 +91,10 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
         <p className="absolute top-0 bg-red-200 text-red-600 w-full leading-loose font-semibold text-center">No videos available for this event yet.</p>
       )}
       {isRecording ? (
-        <VideoRecorder eventId={eventData.id} onVideoUploaded={handleVideoUploaded} />
+        <VideoRecorder eventData={eventData} onVideoUploaded={handleVideoUploaded} />
       ) : (
         <>
-          <VideoStreamer eventId={eventData.id} />
+          <VideoStreamer eventData={eventData} />
           {/* User Info */}
           <div className="controls controls--event-details">
             <h3 className="font-bold">@username</h3>
@@ -128,7 +128,7 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
           <div className="controls controls--social__comments">
             <div className="flex items-center space-x-2 mb-4">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="/placeholder-user.jpg" alt="@commenter" />
+                <AvatarImage src={`https://api.dicebear.com/9.x/adventurer/svg?seed=${12346789}`} alt="@commenter" />
                 <AvatarFallback>CM</AvatarFallback>
               </Avatar>
               <div>

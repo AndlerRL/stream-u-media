@@ -1,15 +1,17 @@
 'use client';
 
+import { VideoUI } from '@/components/shared/video-ui';
+import { Tables } from '@/supabase/database.types';
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 
 interface VideoStreamerProps {
-  eventId: number;
+  eventData: Tables<'events'>;
 }
 
-export function VideoStreamer({ eventId }: VideoStreamerProps) {
+export function VideoStreamer({ eventData }: VideoStreamerProps) {
   const [error, setError] = useState<string | null>(null);
-  const [isStreaming, setIsStreaming] = useState(false);
+  const [isStreamStart, setIsStreamStart] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const socketRef = useRef<Socket | null>(null);
   const mediaSourceRef = useRef<MediaSource | null>(null);
@@ -51,12 +53,12 @@ export function VideoStreamer({ eventId }: VideoStreamerProps) {
 
     socketRef.current.on('connect', () => {
       console.log('Viewer connected to Socket.IO server');
-      socketRef.current?.emit('join-room', eventId);
+      socketRef.current?.emit('join-room', eventData.id);
     });
 
     socketRef.current.on('start-stream', () => {
       console.log('Received start-stream event');
-      setIsStreaming(true);
+      setIsStreamStart(true);
 
       const interval = setInterval(() => {
         if (!mediaSourceRef.current) {
@@ -69,7 +71,7 @@ export function VideoStreamer({ eventId }: VideoStreamerProps) {
 
     socketRef.current.on('end-stream', () => {
       console.log('Received end-stream event');
-      setIsStreaming(false);
+      setIsStreamStart(false);
       if (videoRef.current) {
         videoRef.current.src = '';
       }
@@ -93,16 +95,14 @@ export function VideoStreamer({ eventId }: VideoStreamerProps) {
       }
       socketRef.current?.disconnect();
     };
-  }, [eventId, mediaSourceRef.current?.readyState]);
+  }, [eventData.id, mediaSourceRef.current?.readyState]);
 
   return (
-    <>
-      {error && <div className="error">{error}</div>}
-      {isStreaming ? (
-        <video ref={videoRef} className="video-preview" autoPlay playsInline controls />
-      ) : (
-        <div className="video-preview video-preview--no-video">Waiting for stream to start...</div>
-      )}
-    </>
+    <VideoUI
+      error={error}
+      eventData={eventData}
+      streamerVideoRef={videoRef}
+      isStreamStart={isStreamStart}
+    />
   );
 };

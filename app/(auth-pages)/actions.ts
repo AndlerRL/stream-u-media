@@ -2,11 +2,13 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { encodedRedirect } from "@/utils/utils";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 export const signInAction = async (formData: FormData) => {
   const email = formData.get("email") as string;
   const supabase = createClient();
+  const origin = headers().get("origin");
 
   const { error } = await supabase.auth.signInWithOtp({
     email,

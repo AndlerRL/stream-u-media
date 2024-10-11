@@ -40,7 +40,7 @@ export function QRScanner({ onResult }: { onResult?: (result: string) => void })
   };
 
   return (
-    <div>
+    <div className="flex flex-col items-center justify-center w-[420px] h-[420px]">
       {!scanning ? (
         <Button variant="secondary" onClick={handleScanClick}>Scan QR Code</Button>
       ) : (
@@ -52,7 +52,7 @@ export function QRScanner({ onResult }: { onResult?: (result: string) => void })
             sampleSize: 124,
           }}
           onResult={handleScan}
-          containerStyle={{ width: '100%' }}
+          className="relative w-full h-full [&_video]:object-cover [&_video]:rounded-3xl after:absolute after:top-[10%] after:left-[10%] after:border-[5px] after:w-[80%] after:h-[80%] after:rounded-3xl after:border-spacing-9 after:border-dashed after:border-foreground/30 after:z-10"
         />
       )}
       {error && <p>Error: {error}</p>}

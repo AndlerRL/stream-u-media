@@ -1,26 +1,23 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Command, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { cn } from '@/utils/cn';
+import { VideoUI } from '@/components/shared/video-ui';
+import { Tables } from '@/supabase/database.types';
 import { createClient } from '@/utils/supabase/client';
-import { CameraIcon, ChevronDownIcon, SwitchCameraIcon, ZapIcon, ZapOffIcon, ZoomInIcon, ZoomOutIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 
 interface VideoRecorderProps {
-  eventId: number;
+  eventData: Tables<'events'>;
   onVideoUploaded: (videoUrl: string) => void;
 }
 
-export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) {
-  const [isActive, setIsActive] = useState(false);
+export function VideoRecorder({ eventData, onVideoUploaded }: VideoRecorderProps) {
+  const [isStreaming, setIsStreaming] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>();
   const [error, setError] = useState<string | null>(null);
 
   const streamerVideoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const streamMediaRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const socketRef = useRef<Socket | null>(null);
@@ -32,7 +29,7 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
 
     socketRef.current.on('connect', () => {
       console.log('Connected to Socket.IO server');
-      socketRef.current?.emit('join-room', eventId);
+      socketRef.current?.emit('join-room', eventData.id);
     });
 
     socketRef.current.on('viewer-joined', (viewerId) => {
@@ -44,13 +41,13 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
       stopStreamingAndRecording();
       socketRef.current?.disconnect();
     };
-  }, [eventId]);
+  }, [eventData.id]);
 
   useEffect(() => {
     const startMediaStream = async () => {
       console.log('Starting media stream');
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      streamRef.current = stream;
+      streamMediaRef.current = stream;
 
       streamerVideoRef.current!.srcObject = stream;
       console.log('Local video preview set');
@@ -61,12 +58,12 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
 
   const startStreamingAndRecording = async () => {
     try {
-      setIsActive(true);
+      setIsStreaming(true);
       console.log('Emitting start-stream event');
-      socketRef.current?.emit('start-stream', eventId);
+      socketRef.current?.emit('start-stream', eventData.id);
 
       // Set up MediaRecorder for local recording and streaming
-      const mediaRecorder = new MediaRecorder(streamRef.current!, { mimeType: 'video/webm;codecs=vp9' });
+      const mediaRecorder = new MediaRecorder(streamMediaRef.current!, { mimeType: 'video/webm;codecs=vp9' });
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -76,7 +73,7 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
           const reader = new FileReader();
           reader.onloadend = () => {
             const arrayBuffer = reader.result as ArrayBuffer;
-            socketRef.current?.emit('stream-chunk', { roomId: eventId, chunk: arrayBuffer });
+            socketRef.current?.emit('stream-chunk', { roomId: eventData.id, chunk: arrayBuffer });
           };
           reader.readAsArrayBuffer(event.data);
         }
@@ -98,11 +95,11 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
     }
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+    if (streamMediaRef.current) {
+      streamMediaRef.current.getTracks().forEach(track => track.stop());
     }
-    setIsActive(false);
-    socketRef.current?.emit('end-stream', eventId);
+    setIsStreaming(false);
+    socketRef.current?.emit('end-stream', eventData.id);
   };
 
   const createPreview = () => {
@@ -119,12 +116,12 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
     }
 
     const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-    const file = new File([blob], `event_${eventId}_${Date.now()}.webm`, { type: 'video/webm' });
+    const file = new File([blob], `event_${eventData.id}_${Date.now()}.webm`, { type: 'video/webm' });
 
     try {
       const { data, error } = await supabase.storage
         .from('videos')
-        .upload(`event_${eventId}/${file.name}`, file);
+        .upload(`event_${eventData.id}/${file.name}`, file);
 
       if (error) throw error;
 
@@ -141,158 +138,17 @@ export function VideoRecorder({ eventId, onVideoUploaded }: VideoRecorderProps) 
   };
 
   return (
-    <>
-      {error && <div className="error">{error}</div>}
-
-      <video
-        className={cn('video-preview', { 'hidden': previewUrl && !isActive })}
-        ref={streamerVideoRef}
-        playsInline
-        autoPlay
-        muted
-      />
-      <video
-        className={cn('video-preview', { 'hidden': !previewUrl || isActive })}
-        src={previewUrl}
-        controls
-      />
-
-      <CameraControls streamRef={streamRef} />
-
-      {(previewUrl && !isActive) && (
-        <div className="controls controls--event-details">
-          <h3 className="font-bold">@username</h3>
-          <p className="text-sm">Video description goes here #hashtag</p>
-        </div>
-      )}
-
-      <div className="controls controls--recording">
-        {!isActive ? (
-          <>
-            <Button onClick={startStreamingAndRecording}>Start Streaming and Recording</Button>
-            {previewUrl && <Button onClick={uploadVideo}>Upload video</Button>}
-          </>
-        ) : (
-          <Button onClick={stopStreamingAndRecording}>Stop Streaming and Recording</Button>
-        )}
-      </div>
-
-    </>
-  );
-};
-
-function CameraControls({ streamRef }: { streamRef: React.RefObject<MediaStream | null> }) {
-  const [flashEnabled, setFlashEnabled] = useState(false);
-  const [openCameraSettings, setOpenCameraSettings] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const navigatorRef = useRef<Navigator>();
-
-  useEffect(() => {
-    if (navigatorRef.current) return;
-
-    navigatorRef.current = navigator;
-  }, [navigatorRef.current]);
-
-  const toggleFlash = () => {
-    setFlashEnabled(!flashEnabled);
-    // Implement flash control logic here
-    navigatorRef.current!.mediaDevices.getUserMedia({ video: true })
-      .then(stream => {
-        const track = stream.getVideoTracks()[0];
-        track.applyConstraints({
-          advanced: [{ torch: flashEnabled }]
-        });
-      });
-  };
-
-  const zoomIn = () => {
-    setZoomLevel(prev => Math.min(prev + 0.1, 3)); // Max zoom level 3x
-    // Implement zoom-in logic here
-    navigatorRef.current!.mediaDevices.getUserMedia({ video: true })
-      .then(stream => {
-        const track = stream.getVideoTracks()[0];
-        track.applyConstraints({
-          advanced: [{ zoom: zoomLevel }]
-        });
-      });
-  };
-
-  const zoomOut = () => {
-    setZoomLevel(prev => Math.max(prev - 0.1, 1)); // Min zoom level 1x
-    // Implement zoom-out logic here
-    navigatorRef.current!.mediaDevices.getUserMedia({ video: true })
-      .then(stream => {
-        const track = stream.getVideoTracks()[0];
-        track.applyConstraints({
-          advanced: [{ zoom: zoomLevel }]
-        });
-      });
-  };
-
-  const flipCamera = async () => {
-    if (streamRef.current) {
-      const videoTrack = streamRef.current.getVideoTracks()[0];
-      const constraints = videoTrack.getConstraints();
-      constraints.facingMode = constraints.facingMode === 'user' ? 'environment' : 'user';
-      await videoTrack.applyConstraints(constraints);
-    }
-  };
-
-  const cameraOptions = [
-    {
-      label: flashEnabled ? 'disable-flash' : 'enable-flash',
-      icon: flashEnabled ? <ZapOffIcon className="size-6" /> : <ZapIcon className="size-6" />,
-      fnCallback: toggleFlash,
-    },
-    {
-      label: 'zoom-in',
-      icon: <ZoomInIcon className="size-6" />,
-      fnCallback: zoomIn,
-    },
-    {
-      label: 'zoom-out',
-      icon: <ZoomOutIcon className="size-6" />,
-      fnCallback: zoomOut,
-    },
-    {
-      label: 'flip-camera',
-      icon: <SwitchCameraIcon className="size-6" />,
-      fnCallback: flipCamera,
-    },
-  ];
-
-  return (
-    <div className="controls controls--camera">
-      <DropdownMenu open={openCameraSettings} onOpenChange={setOpenCameraSettings}>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm">
-            <CameraIcon />
-            <ChevronDownIcon className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[200px]">
-          <Command>
-            <CommandList>
-              <CommandGroup className="camera-controls">
-                {cameraOptions.map(({ label, fnCallback, icon }) => (
-                  <CommandItem
-                    key={`camera-opt-${label}`}
-                    value={label}
-                    onSelect={(value) => {
-                      fnCallback()
-                    }}
-                  >
-                    <span className="sr-only">
-                      {label.replace('-', ' ')}
-                    </span>
-                    {icon}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+    <VideoUI
+      error={error}
+      eventData={eventData}
+      previewUrl={previewUrl}
+      isStreaming={isStreaming}
+      streamMediaRef={streamMediaRef}
+      streamerVideoRef={streamerVideoRef}
+      onUploadStreamedVideo={uploadVideo}
+      onStreamingStop={stopStreamingAndRecording}
+      onStreamingStart={startStreamingAndRecording}
+      streamer
+    />
   );
 };
