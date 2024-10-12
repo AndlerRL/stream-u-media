@@ -10,6 +10,8 @@ export const signInAction = async (formData: FormData) => {
   const supabase = createClient();
   const origin = headers().get("origin");
 
+  console.log('`${origin}/sign-in/otp`', `${origin}/sign-in/otp`)
+
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
@@ -20,6 +22,8 @@ export const signInAction = async (formData: FormData) => {
   });
 
   if (error) {
+    console.log('error msg -> ', error.message)
+    console.trace('error trace -> ', error)
     return encodedRedirect("error", "/sign-in", error.message);
   }
 

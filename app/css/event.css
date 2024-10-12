@@ -1,12 +1,12 @@
 .video-wrapper {
-  @apply relative h-screen w-full max-w-screen-sm bg-muted;
+  @apply relative h-screen w-full max-w-screen-sm bg-secondary;
 }
 
 .video-preview {
-  @apply h-full w-full object-cover z-0 bg-accent/50;
+  @apply h-full w-full object-cover z-0;
 
   &.video-preview--no-video {
-    @apply bg-accent flex items-center justify-center z-0;
+    @apply flex items-center justify-center z-0;
   }
 }
 
@@ -17,7 +17,7 @@
     @apply top-4 left-4 right-4 flex justify-between;
   }
   &.controls--event-details {
-    @apply text-background flex-col bottom-20 left-4;
+    @apply text-background flex-col items-start bottom-20 left-4;
   }
   &.controls--social__comments {
     @apply flex-col bottom-0 pb-16 pt-12 left-0 right-0 bg-opacity-50 px-4 bg-gradient-to-t from-foreground to-foreground/30 text-background;
@@ -26,6 +26,6 @@
     @apply right-4 bottom-20 flex flex-col items-center space-y-4;
   }
   &.controls--recording {
-    @apply h-full pt-[75%] top-0 bottom-0 left-0 right-0 flex items-center flex-col justify-center z-[1];
+    @apply h-max top-[66.666%] bottom-0 left-0 right-0 flex items-center flex-col gap-4 justify-center z-[1];
   }
 }

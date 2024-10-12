@@ -148,6 +148,11 @@ export function VideoRecorder({ eventData, onVideoUploaded }: VideoRecorderProps
       onUploadStreamedVideo={uploadVideo}
       onStreamingStop={stopStreamingAndRecording}
       onStreamingStart={startStreamingAndRecording}
+      onOpenChat={() => console.log('Open chat')}
+      onOpenAvatar={() => console.log('Open avatar')}
+      onLikeAction={() => console.log('Like action')}
+      onShareAction={() => console.log('Share action')}
+      onToggleAiNarrator={() => console.log('Toggle AI narrator')}
       streamer
     />
   );

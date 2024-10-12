@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Tables } from "@/supabase/database.types";
-import { Disc3Icon, HeartIcon, MessageCircleIcon, ShareIcon } from "lucide-react";
+import { Disc3Icon, HeartIcon, MessageCircleIcon, ShareIcon, SparklesIcon } from "lucide-react";
 import { useSetState } from "react-use";
 
 const defaultState = {
@@ -130,33 +130,34 @@ export function VideoUI({
       {/* User Info */}
       <div className="controls controls--event-details">
         <h3 className="font-bold">@streamerName</h3>
-        <p className="text-sm">stream live description might go here...</p>
+        <p className="text-sm">stream live event description might go here...</p>
       </div>
 
       {/* Right Side CTAs */}
       <div className="controls controls--social h-1/2 md:h-1/3">
-        <Avatar className="h-12 w-12 border-2 border-white" onClick={() => toggleDrawer('openProfile')}>
+        <Avatar className="size-14 border-2 bg-accent-foreground bg-accent" onClick={() => toggleDrawer('openProfile')}>
           <AvatarImage src={`https://api.dicebear.com/9.x/adventurer/svg?seed=${1234}`} alt="@username" />
           <AvatarFallback>UN</AvatarFallback>
         </Avatar>
 
         <Button size="icon" variant="ghost" onClick={onLikeAction}>
-          <HeartIcon className="h-8 w-8" />
+          <HeartIcon className="h-8 w-8 text-foreground" />
         </Button>
-        <span className="text-xs">100k</span>
+        <span className="text-xs font-extrabold drop-shadow-lg">100k</span>
 
         <Button size="icon" variant="ghost" onClick={() => toggleDrawer('openChat')}>
-          <MessageCircleIcon className="h-8 w-8" />
+          <MessageCircleIcon className="h-8 w-8 text-foreground" />
         </Button>
-        <span className="text-xs">1k</span>
+        <span className="text-xs font-extrabold drop-shadow-lg">1k</span>
 
         <Button size="icon" variant="ghost" className={cn({ 'hidden': streamer })} onClick={() => toggleDrawer('openShare')}>
-          <ShareIcon className="h-8 w-8" />
+          <ShareIcon className="h-8 w-8 text-foreground" />
         </Button>
-        <span className={cn('text-xs', { 'hidden': streamer })}>500</span>
+        <span className={cn('text-xs font-extrabold drop-shadow-lg', { 'hidden': streamer })}>500</span>
 
-        <Button size="icon" variant="ghost" onClick={() => toggleDrawer('openAi')}>
-          <Disc3Icon className={cn('h-8 w-8', { 'animate-spin': isStreamStart || streamerVideoRef.current })} />
+        <Button size="icon" variant="ghost" className="relative" onClick={() => toggleDrawer('openAi')}>
+          <Disc3Icon className={cn('h-8 w-8 text-foreground', { 'animate-spin': isStreamStart || streamerVideoRef.current })} />
+          <SparklesIcon className="absolute -top-1.5 right-0 h-5 w-5 text-foreground" />
         </Button>
       </div>
 
@@ -181,7 +182,7 @@ export function VideoUI({
                 className="flex-grow bg-transparent border-none focus:ring-0 text-white placeholder-gray-400"
               />
               <Button size="icon" variant="ghost">
-                <SendHorizontalIcon className="h-5 w-5" />
+                <SendHorizontalIcon className="h-5 w-5 text-foreground" />
               </Button>
             </div>
           </div> */}
@@ -214,8 +215,8 @@ export function VideoUI({
 export interface VideoUIProps {
   eventData: Tables<'events'>;
   error: string | null;
-  streamerVideoRef: React.RefObject<HTMLVideoElement | null>;
-  streamMediaRef?: React.RefObject<MediaStream | null>;
+  streamerVideoRef: React.RefObject<HTMLVideoElement>;
+  streamMediaRef?: React.RefObject<MediaStream>;
   previewUrl?: string;
   isStreaming?: boolean;
   isStreamStart?: boolean;
@@ -224,7 +225,6 @@ export interface VideoUIProps {
   onStreamingStart?: () => Promise<void>;
   onUploadStreamedVideo?: () => Promise<void>;
   onStreamingStop?: () => void;
-  // add new onCLick actions below
   onOpenAvatar?: () => void;
   onLikeAction?: () => void;
   onOpenChat?: () => void;
@@ -233,7 +233,7 @@ export interface VideoUIProps {
 }
 
 export type RequiredIfStreamer<T extends {
-  streamMediaRef?: React.RefObject<MediaStream | null>;
+  streamMediaRef?: React.RefObject<MediaStream>;
   onStreamingStart?: VideoUIProps['onStreamingStart'];
   onUploadStreamedVideo?: VideoUIProps['onUploadStreamedVideo'];
   onStreamingStop?: VideoUIProps['onStreamingStop'];

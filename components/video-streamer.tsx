@@ -105,6 +105,11 @@ export function VideoStreamer({ eventData, onNewRecording }: VideoStreamerProps)
       streamerVideoRef={videoRef}
       isStreamStart={isStreamStart}
       onNewRecording={onNewRecording}
+      onOpenAvatar={() => console.log('Open Avatar')}
+      onOpenChat={() => console.log('Open Chat')}
+      onShareAction={() => console.log('Share Action')}
+      onLikeAction={() => console.log('Like Action')}
+      onToggleAiNarrator={() => console.log('Toggle AI Narrator')}
     />
   );
 };
