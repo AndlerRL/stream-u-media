@@ -1,14 +1,9 @@
 'use client'
 
-import { EventCardDrawer } from '@/components/pages/event-card-drawer';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { VideoRecorder } from '@/components/video-recorder';
 import VideoSlider from '@/components/video-slider';
 import { VideoStreamer } from '@/components/video-streamer';
 import { createClient } from '@/utils/supabase/client';
-import { Disc3Icon, HeartIcon, MessageCircleIcon, SendHorizontalIcon, ShareIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useAsync } from 'react-use';
 
@@ -94,65 +89,7 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
         <VideoRecorder eventData={eventData} onVideoUploaded={handleVideoUploaded} />
       ) : (
         <>
-          <VideoStreamer eventData={eventData} />
-          {/* User Info */}
-          <div className="controls controls--event-details">
-            <h3 className="font-bold">@username</h3>
-            <p className="text-sm">Video description goes here #hashtag</p>
-          </div>
-
-          {/* Right Side CTAs */}
-          <div className="controls controls--social">
-            <Avatar className="h-12 w-12 border-2 border-white">
-              <AvatarImage src={`https://api.dicebear.com/9.x/adventurer/svg?seed=${1234}`} alt="@username" />
-              <AvatarFallback>UN</AvatarFallback>
-            </Avatar>
-            <Button size="icon" variant="ghost">
-              <HeartIcon className="h-8 w-8" />
-            </Button>
-            <span className="text-xs">100k</span>
-            <Button size="icon" variant="ghost">
-              <MessageCircleIcon className="h-8 w-8" />
-            </Button>
-            <span className="text-xs">1k</span>
-            <Button size="icon" variant="ghost">
-              <ShareIcon className="h-8 w-8" />
-            </Button>
-            <span className="text-xs">500</span>
-            <Button size="icon" variant="ghost">
-              <Disc3Icon className="h-8 w-8 animate-spin" />
-            </Button>
-          </div>
-
-          {/* Comments Section */}
-          <div className="controls controls--social__comments">
-            <div className="flex items-center space-x-2 mb-4">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={`https://api.dicebear.com/9.x/adventurer/svg?seed=${12346789}`} alt="@commenter" />
-                <AvatarFallback>CM</AvatarFallback>
-              </Avatar>
-              <div>
-                <h4 className="font-bold text-sm">@commenter</h4>
-                <p className="text-xs">Great video! Keep it up 🔥</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Input
-                type="text"
-                placeholder="Add comment..."
-                className="flex-grow bg-transparent border-none focus:ring-0 text-white placeholder-gray-400"
-              />
-              <Button size="icon" variant="ghost">
-                <SendHorizontalIcon className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Recording Controls */}
-          <div className="controls controls--recording">
-            <Button onClick={() => setIsRecording(true)}>Start New Recording</Button>
-            <EventCardDrawer eventData={eventData} />
-          </div>
+          <VideoStreamer eventData={eventData} onNewRecording={() => setIsRecording(true)} />
         </>
       )}
     </section>

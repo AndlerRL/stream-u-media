@@ -7,9 +7,10 @@ import { io, Socket } from 'socket.io-client';
 
 interface VideoStreamerProps {
   eventData: Tables<'events'>;
+  onNewRecording: () => void;
 }
 
-export function VideoStreamer({ eventData }: VideoStreamerProps) {
+export function VideoStreamer({ eventData, onNewRecording }: VideoStreamerProps) {
   const [error, setError] = useState<string | null>(null);
   const [isStreamStart, setIsStreamStart] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -103,6 +104,7 @@ export function VideoStreamer({ eventData }: VideoStreamerProps) {
       eventData={eventData}
       streamerVideoRef={videoRef}
       isStreamStart={isStreamStart}
+      onNewRecording={onNewRecording}
     />
   );
 };
