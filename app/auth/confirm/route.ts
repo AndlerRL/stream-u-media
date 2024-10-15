@@ -5,20 +5,21 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url)
-  const token = searchParams.get('otp') ?? ''
-  const token_hash = searchParams.get('token_hash') ?? ''
-  const email = searchParams.get('email') ?? ''
-  const type = searchParams.get('type') as EmailOtpType | null
-  const next = searchParams.get('redirect_to') ?? '/'
+  const { searchParams: reqSearchParams } = new URL(request.url)
+  const token = reqSearchParams.get('token') ?? ''
+  const email = reqSearchParams.get('email') ?? ''
+  const type = reqSearchParams.get('type') as EmailOtpType | null
+  const next = reqSearchParams.get('redirect_to') ?? '/'
 
-  if ((token || token_hash) && type) {
+  console.log('reqSearchParams -> ', reqSearchParams.toString())
+
+  if (token && type) {
     const supabase = createClient()
 
     const { data: { session }, error } = await supabase.auth.verifyOtp({
       type,
       token,
-      token_hash,
+      // token_hash,
       email,
     })
 

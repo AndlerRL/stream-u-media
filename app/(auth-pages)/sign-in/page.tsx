@@ -9,7 +9,7 @@ import Link from "next/link";
 
 export default function Login({ searchParams }: { searchParams: Message }) {
   return (
-    <form className="relative flex-1 flex w-full flex-col items-center justify-center min-w-64">
+    <section className="relative flex-1 flex w-full flex-col items-center justify-center min-w-64">
       <Button asChild variant="link" className="absolute top-5 left-5 font-medium">
         <Link href="/" className="flex gap-1">
           <ArrowLeftIcon className="size-5" />
@@ -18,7 +18,7 @@ export default function Login({ searchParams }: { searchParams: Message }) {
       </Button>
       <h1 className="text-3xl font-bold">Sign in</h1>
       <p className="text-lg text-center font-medium">Sign in with an OTP</p>
-      <section className="flex flex-col w-full max-w-xs gap-2 [&>input]:mb-3 mt-8">
+      <form className="flex flex-col w-full max-w-xs gap-2 [&>input]:mb-3 mt-8">
         <Label htmlFor="email">Email</Label>
         <Input name="email" placeholder="you@example.com" required />
         {/* <div className="flex justify-between items-center">
@@ -40,7 +40,7 @@ export default function Login({ searchParams }: { searchParams: Message }) {
           Sign in
         </SubmitButton>
         <FormMessage message={searchParams} />
-      </section>
-    </form>
+      </form>
+    </section>
   );
 }

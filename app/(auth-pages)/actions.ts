@@ -11,6 +11,7 @@ export const signInAction = async (formData: FormData) => {
   const origin = headers().get("origin");
 
   console.log('`${origin}/sign-in/otp`', `${origin}/sign-in/otp`)
+  console.log('email -> ', email)
 
   const { error } = await supabase.auth.signInWithOtp({
     email,
