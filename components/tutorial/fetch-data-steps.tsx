@@ -1,5 +1,5 @@
-import { TutorialStep } from "./tutorial-step";
 import { CodeBlock } from "./code-block";
+import { TutorialStep } from "./tutorial-step";
 
 const create = `create table notes (
   id bigserial primary key,
@@ -45,6 +45,9 @@ export default function Page() {
 `.trim();
 
 export default function FetchDataSteps() {
+  const session = useSession();
+
+  console.log('🐕‍🦺 session [Fetch data steps] --> ', session);
   return (
     <ol className="flex flex-col gap-6">
       <TutorialStep title="Create some tables and insert some data">

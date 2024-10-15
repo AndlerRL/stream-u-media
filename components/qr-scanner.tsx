@@ -12,6 +12,8 @@ export function QRScanner({ onResult }: { onResult?: (result: string) => void })
   const [scanning, setScanning] = useState(false);
   const router = useRouter();
 
+  console.log('🐕‍🦺 session [QRScanner] --> ', session);
+
   const handleScanClick = () => {
     setScanning(true);
   };
