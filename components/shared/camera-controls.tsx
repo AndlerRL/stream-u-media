@@ -23,6 +23,7 @@ export function CameraControls({ streamMediaRef }: { streamMediaRef: React.RefOb
       .then(stream => {
         const track = stream.getVideoTracks()[0];
         track.applyConstraints({
+          // @ts-ignore
           advanced: [{ torch: flashEnabled }]
         });
       });
@@ -35,6 +36,7 @@ export function CameraControls({ streamMediaRef }: { streamMediaRef: React.RefOb
       .then(stream => {
         const track = stream.getVideoTracks()[0];
         track.applyConstraints({
+          // @ts-ignore
           advanced: [{ zoom: zoomLevel }]
         });
       });
@@ -47,6 +49,7 @@ export function CameraControls({ streamMediaRef }: { streamMediaRef: React.RefOb
       .then(stream => {
         const track = stream.getVideoTracks()[0];
         track.applyConstraints({
+          // @ts-ignore
           advanced: [{ zoom: zoomLevel }]
         });
       });
