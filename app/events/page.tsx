@@ -1,10 +1,12 @@
-import FetchDataSteps from "@/components/tutorial/fetch-data-steps";
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/server";
 import { InfoIcon } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
-export default async function ProtectedPage() {
+export default async function EventsPage() {
   const supabase = createClient()
+  const events = await supabase.from("events").select("*");
 
   const {
     data: { user },
@@ -29,10 +31,21 @@ export default async function ProtectedPage() {
           {JSON.stringify(user, null, 2)}
         </pre>
       </div>
-      <div>
-        <h2 className="font-bold text-2xl mb-4">Next steps</h2>
-        <FetchDataSteps />
-      </div>
+
+      <ul>
+        {events?.data?.map((event) => (
+          <li key={event.id} className="p-4 bg-accent text-foreground rounded-md">
+            <h3 className="text-lg font-bold">{event.name}</h3>
+            <p>{event.description}</p>
+
+            <Button asChild className="w-auto">
+              <Link href={`/events/${event.slug}`}>
+                View event
+              </Link>
+            </Button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

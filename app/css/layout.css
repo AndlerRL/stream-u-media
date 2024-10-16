@@ -7,7 +7,7 @@
 }
 
 .error {
-  @apply text-red-600 bg-red-100 text-center leading-loose font-semibold;
+  @apply absolute w-full text-red-600 bg-red-100 text-center leading-loose font-semibold z-50;
 }
 
 .page-screen-wrapper {

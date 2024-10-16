@@ -1,14 +1,26 @@
 'use client'
 
 import { VideoRecorder } from '@/components/video-recorder';
-import VideoSlider from '@/components/video-slider';
+import { VideoSlider } from '@/components/video-slider';
 import { VideoStreamer } from '@/components/video-streamer';
+import { Tables } from '@/supabase/database.types';
 import { createClient } from '@/utils/supabase/client';
+import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import { useState } from 'react';
 import { useAsync } from 'react-use';
 
+const defaultVideos: Tables<'videos'>[] = [
+  { id: 1, source: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', description: 'For Bigger Blazes', loves: Math.floor(Math.random() * 100), event_id: 1, created_at: new Date().toISOString(), tags_id: [], title: null, user_id: '' },
+  { id: 2, source: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4', description: 'For Bigger Escapes', loves: Math.floor(Math.random() * 100), event_id: 1, created_at: new Date().toISOString(), tags_id: [], title: null, user_id: '' },
+  { id: 3, source: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4', description: 'For Bigger Fun', loves: Math.floor(Math.random() * 100), event_id: 1, created_at: new Date().toISOString(), tags_id: [], title: null, user_id: '' },
+  { id: 4, source: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4', description: 'For Bigger Joyrides', loves: Math.floor(Math.random() * 100), event_id: 1, created_at: new Date().toISOString(), tags_id: [], title: null, user_id: '' },
+  { id: 5, source: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4', description: 'For Bigger Meltdowns', loves: Math.floor(Math.random() * 100), event_id: 1, created_at: new Date().toISOString(), tags_id: [], title: null, user_id: '' },
+  { id: 6, source: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4', description: 'Sintel', loves: Math.floor(Math.random() * 100), event_id: 1, created_at: new Date().toISOString(), tags_id: [], title: null, user_id: '' },
+];
+
 export function EventPageComponent({ params }: { params: { slug: string } }) {
   const [isRecording, setIsRecording] = useState(false);
+  const supabase = createClient();
   const { value: sessionData, error: sessionError } = useAsync(async () => {
     const { data, error } = await supabase.auth.getSession();
 
@@ -19,7 +31,6 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
 
     return data;
   });
-  const supabase = createClient();
   const { value: eventData, error: eventDataError } = useAsync(async () => {
     // Fetch event data from your API or Supabase
     const { data, error } = await supabase
@@ -79,19 +90,17 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
   }
 
   return (
-    <section className="video-wrapper">
-      {videos && videos.length > 0 ? (
-        <VideoSlider videos={videos} />
-      ) : (
-        <p className="absolute top-0 bg-red-200 text-red-600 w-full leading-loose font-semibold text-center">No videos available for this event yet.</p>
-      )}
-      {isRecording ? (
-        <VideoRecorder eventData={eventData} onVideoUploaded={handleVideoUploaded} />
-      ) : (
-        <>
-          <VideoStreamer eventData={eventData} onNewRecording={() => setIsRecording(true)} />
-        </>
-      )}
-    </section>
+    <SessionContextProvider supabaseClient={supabase}>
+      <section className="video-wrapper">
+        {isRecording ? (
+          <VideoRecorder eventData={eventData} onVideoUploaded={handleVideoUploaded} />
+        ) :
+          <VideoSlider
+            videos={defaultVideos}
+            topContentComponent={<VideoStreamer eventData={eventData} onNewRecording={() => setIsRecording(true)} />}
+          />
+        }
+      </section>
+    </SessionContextProvider>
   );
 }

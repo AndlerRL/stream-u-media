@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Tables } from "@/supabase/database.types";
+import { useSession } from "@supabase/auth-helpers-react";
 import { Disc3Icon, HeartIcon, MessageCircleIcon, ShareIcon, SparklesIcon } from "lucide-react";
 import { useSetState } from "react-use";
 
@@ -15,6 +16,8 @@ const defaultState = {
   openShare: false,
   openAi: false,
 }
+
+const DEFAULT_AVATAR = 'https://api.dicebear.com/9.x/adventurer/svg?seed=12346789'
 
 export function VideoUI({
   eventData,
@@ -35,12 +38,14 @@ export function VideoUI({
   onStreamingStop,
   onUploadStreamedVideo,
 }: VideoUIPropsWithStreamer) {
+  const session = useSession();
   const [state, setState] = useSetState<{
     openProfile: boolean,
     openChat: boolean,
     openShare: boolean,
     openAi: boolean,
   }>(defaultState)
+  const userData = session?.user.user_metadata
 
   const drawerOpen = Object.keys(state).find((key) => state[key as keyof typeof state]);
 
@@ -99,7 +104,7 @@ export function VideoUI({
   console.log("drawerOpen", drawerOpen)
 
   return (
-    <section className="video-wrapper">
+    <section className={cn('video-wrapper', { 'max-h-[110%]': !isStreamStart })}>
       {error && <div className="error">{error}</div>}
 
       {streamer || isStreamStart ? (
@@ -129,14 +134,14 @@ export function VideoUI({
 
       {/* User Info */}
       <div className="controls controls--event-details">
-        <h3 className="font-bold">@streamerName</h3>
+        <h3 className="font-bold">@{userData?.username}</h3>
         <p className="text-sm">stream live event description might go here...</p>
       </div>
 
       {/* Right Side CTAs */}
       <div className="controls controls--social h-1/2 md:h-1/3">
-        <Avatar className="size-14 border-2 bg-accent-foreground bg-accent" onClick={() => toggleDrawer('openProfile')}>
-          <AvatarImage src={`https://api.dicebear.com/9.x/adventurer/svg?seed=${1234}`} alt="@username" />
+        <Avatar className="fixed size-14 border-2 top-10 bg-accent" onClick={() => toggleDrawer('openProfile')}>
+          <AvatarImage src={userData?.avatar || DEFAULT_AVATAR} alt="@username" />
           <AvatarFallback>UN</AvatarFallback>
         </Avatar>
 

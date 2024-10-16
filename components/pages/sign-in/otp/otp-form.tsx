@@ -27,7 +27,7 @@ export function OTPForm({ token }: { token: string }) {
   }
 
   useEffect(() => {
-    if (otp.length === 6 && buttonRef.current) {
+    if (otp && otp.length === 6 && buttonRef.current) {
       console.info("OTP is complete. Calling API...");
 
       // dispatch the action event to call the API
@@ -36,12 +36,12 @@ export function OTPForm({ token }: { token: string }) {
       // reset the OTP field
       setOtp('');
     }
-  }, [buttonRef.current]);
+  }, [otp, buttonRef.current]);
 
   return (
     <form action={`/auth/confirm`}>
       <input type="hidden" name="type" value="email" />
-      <input type="hidden" name="redirect_to" value={`/event/stream-o-media`} />
+      <input type="hidden" name="redirect_to" value={`/events`} />
       <input type="hidden" name="email" value={searchParams.get('email') as string} />
       <InputOTP
         type="text"

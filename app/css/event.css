@@ -17,13 +17,13 @@
     @apply top-4 left-4 right-4 flex justify-between;
   }
   &.controls--event-details {
-    @apply text-background flex-col items-start bottom-20 left-4;
+    @apply text-background flex-col items-start top-0 left-0 px-4 py-10 bg-gradient-to-b from-accent-foreground/80 to-accent/10 w-full;
   }
   &.controls--social__comments {
     @apply flex-col bottom-0 pb-16 pt-12 left-0 right-0 bg-opacity-50 px-4 bg-gradient-to-t from-foreground to-foreground/30 text-background;
   }
   &.controls--social {
-    @apply right-4 bottom-20 flex flex-col items-center space-y-4;
+    @apply right-4 bottom-[24vh] flex flex-col items-center space-y-4;
   }
   &.controls--recording {
     @apply h-max top-[66.666%] bottom-0 left-0 right-0 flex items-center flex-col gap-4 justify-center z-[1];
