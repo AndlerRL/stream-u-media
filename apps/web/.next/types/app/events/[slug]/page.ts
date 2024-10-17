@@ -1,4 +1,4 @@
-// File: /home/andler/Development/nextjs/stream-u-media/app/events/[slug]/page.tsx
+// File: /home/andler/Development/nextjs/stream-u-media/apps/web/app/events/[slug]/page.tsx
 import * as entry from '../../../../../app/events/[slug]/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

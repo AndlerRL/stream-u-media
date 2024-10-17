@@ -1,5 +1,5 @@
 {
-  "name": "@service/supabase",
+  "name": "@services/supabase",
   "version": "0.0.1",
   "private": true,
   "type": "module",

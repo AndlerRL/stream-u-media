@@ -5,7 +5,7 @@ import { CameraControls } from "@/components/shared/camera-controls";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { Tables } from "@/supabase/database.types";
+import type { SupaTypes } from "@services/supabase";
 import { useSession } from "@supabase/auth-helpers-react";
 import {
   Disc3Icon,
@@ -284,7 +284,7 @@ export function VideoUI({
 }
 
 export interface VideoUIProps {
-  eventData: Tables<"events">;
+  eventData: SupaTypes.Tables<"events">;
   error: string | null;
   streamerVideoRef: React.RefObject<HTMLVideoElement>;
   streamMediaRef?: React.RefObject<MediaStream>;

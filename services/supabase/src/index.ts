@@ -1,4 +1,4 @@
-export * from './database-auth.types'
+export type * as SupaAuthTypes from './database-auth.types'
 export * from './database.schemas'
-export * from './database.types'
+export type * as SupaTypes from './database.types'
 

@@ -2,11 +2,11 @@
 
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { Tables } from "@/supabase/database.types";
+import type { SupaTypes } from "@services/supabase";
 import { GripHorizontalIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-type Videos = Tables<"videos">;
+type Videos = SupaTypes.Tables<"videos">;
 
 export function VideoSlider({
   videos,

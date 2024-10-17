@@ -1,13 +1,13 @@
 "use client";
 
 import { VideoUI } from "@/components/shared/video-ui";
-import type { Tables } from "@/supabase/database.types";
 import { createClient } from "@/utils/supabase/client";
+import type { SupaTypes } from "@services/supabase";
 import { useEffect, useRef, useState } from "react";
 import { type Socket, io } from "socket.io-client";
 
 interface VideoRecorderProps {
-  eventData: Tables<"events">;
+  eventData: SupaTypes.Tables<"events">;
   onVideoUploaded: (videoUrl: string) => void;
 }
 
@@ -149,7 +149,8 @@ export function VideoRecorder({
       .update({ status: "ended" })
       .eq("event_id", eventData.id)
       .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
-      .eq("status", "live");
+      .eq("status", "live")
+      .select("id");
 
     if (streamError) {
       console.error("Error updating stream record:", streamError);

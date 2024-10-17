@@ -1,13 +1,13 @@
 "use client";
 
 import { VideoUI } from "@/components/shared/video-ui";
-import type { Tables } from "@/supabase/database.types";
+import type { SupaTypes } from "@services/supabase";
 import { useEffect, useRef, useState } from "react";
 import { type Socket, io } from "socket.io-client";
 
 interface VideoStreamerProps {
-  eventData: Tables<"events">;
-  activeStreams: Tables<"streams">[];
+  eventData: SupaTypes.Tables<"events">;
+  activeStreams: SupaTypes.Tables<"streams">[];
   onNewRecording: () => void;
 }
 
@@ -169,6 +169,7 @@ export function VideoStreamer({
           {activeStreams.map((stream) => (
             <button
               key={stream.id}
+              type="button"
               onClick={() => setCurrentStreamId(stream.id)}
               className={currentStreamId === stream.id ? "active" : ""}
             >

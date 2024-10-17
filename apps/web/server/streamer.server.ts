@@ -4,6 +4,7 @@ import { type Socket, Server as SocketIOServer } from "socket.io";
 export class Streamer {
   private server: Server;
   private io: SocketIOServer;
+  private socket?: Socket;
   private streamers: Map<string, Set<string>> = new Map(); // roomId -> Set of streamerIds
 
   constructor({ server }: { server: Server }) {
@@ -23,10 +24,7 @@ export class Streamer {
 
       socket.on("end-stream", this.endStream.bind(this, socket));
 
-      socket.on("stream-chunk", ({ roomId, chunk }) => {
-        console.log(`Received stream chunk for room ${roomId}`);
-        socket.to(roomId).emit("stream-chunk", chunk);
-      });
+      socket.on("stream-chunk", this.streamChunk.bind(this, socket));
 
       socket.on("disconnect", this.disconnect.bind(this, socket));
     });
@@ -35,9 +33,15 @@ export class Streamer {
   private async joinRoom(socket: Socket, roomId: string) {
     await socket.join(roomId);
     console.log(`User ${socket.id} joined room ${roomId}`);
-    const streamerId = this.streamers.get(roomId);
-    if (streamerId && streamerId !== socket.id) {
-      socket.to(streamerId).emit("viewer-joined", socket.id);
+
+    const streamerIds = this.streamers.get(roomId);
+
+    if (streamerIds) {
+      for (const streamerId of streamerIds) {
+        if (streamerId !== socket.id) {
+          socket.to(streamerId).emit("viewer-joined", socket.id);
+        }
+      }
     }
   }
 
@@ -65,5 +69,9 @@ export class Streamer {
       }
     }
     console.log("User disconnected", socket.id);
+  }
+
+  private streamChunk(socket: Socket, { roomId, streamId, chunk }: { roomId: string; streamId: string; chunk: string }) {
+    socket.to(roomId).emit("stream-chunk", { streamId, chunk });
   }
 }

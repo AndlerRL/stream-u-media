@@ -3,13 +3,13 @@
 import { VideoRecorder } from "@/components/video-recorder";
 import { VideoSlider } from "@/components/video-slider";
 import { VideoStreamer } from "@/components/video-streamer";
-import type { Tables } from "@/supabase/database.types";
 import { createClient } from "@/utils/supabase/client";
-import { SessionContextProvider, useSupabaseClient } from "@supabase/auth-helpers-react";
+import type { SupaTypes } from "@services/supabase";
+import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
 import { useAsync } from "react-use";
 
-const defaultVideos: Tables<"videos">[] = [
+const defaultVideos: SupaTypes.Tables<"videos">[] = [
   {
     id: 1,
     source:
@@ -145,13 +145,12 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
 
   console.log("💁 Data State", { eventData, videos, sessionData, params });
 
-  const [activeStreams, setActiveStreams] = useState<Tables<"streams">[]>([]);
-  const supabaseClient = useSupabaseClient();
+  const [activeStreams, setActiveStreams] = useState<SupaTypes.Tables<"streams">[]>([]);
 
   useEffect(() => {
     if (!eventData) return;
 
-    const streamSubscription = supabaseClient
+    const streamSubscription = supabase
       .channel(`event-${eventData.id}-streams`)
       .on(
         "postgres_changes",
@@ -164,7 +163,7 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
         (payload) => {
           console.log("Stream update:", payload);
           if (payload.eventType === "INSERT") {
-            setActiveStreams((prev) => [...prev, payload.new as Tables<"streams">]);
+            setActiveStreams((prev) => [...prev, payload.new as SupaTypes.Tables<"streams">]);
           } else if (payload.eventType === "DELETE") {
             setActiveStreams((prev) => prev.filter((stream) => stream.id !== payload.old.id));
           }
@@ -172,7 +171,7 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
       )
       .subscribe();
 
-    const videoSubscription = supabaseClient
+    const videoSubscription = supabase
       .channel(`event-${eventData.id}-videos`)
       .on(
         "postgres_changes",
@@ -193,7 +192,7 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
       streamSubscription.unsubscribe();
       videoSubscription.unsubscribe();
     };
-  }, [eventData, supabaseClient]);
+  }, [eventData, supabase]);
 
   if (!eventData) {
     return <div>Loading event data...</div>;
@@ -213,6 +212,7 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
             topContentComponent={
               <VideoStreamer
                 eventData={eventData}
+                activeStreams={activeStreams}
                 onNewRecording={() => setIsRecording(true)}
               />
             }
