@@ -14,12 +14,12 @@ export function CameraControls({ streamMediaRef }: { streamMediaRef: React.RefOb
     if (navigatorRef.current) return;
 
     navigatorRef.current = navigator;
-  }, [navigatorRef.current]);
+  }, []);
 
   const toggleFlash = () => {
     setFlashEnabled(!flashEnabled);
     // Implement flash control logic here
-    navigatorRef.current!.mediaDevices.getUserMedia({ video: true })
+    navigatorRef.current?.mediaDevices.getUserMedia({ video: true })
       .then(stream => {
         const track = stream.getVideoTracks()[0];
         track.applyConstraints({
@@ -32,7 +32,7 @@ export function CameraControls({ streamMediaRef }: { streamMediaRef: React.RefOb
   const zoomIn = () => {
     setZoomLevel(prev => Math.min(prev + 0.1, 3)); // Max zoom level 3x
     // Implement zoom-in logic here
-    navigatorRef.current!.mediaDevices.getUserMedia({ video: true })
+    navigatorRef.current?.mediaDevices.getUserMedia({ video: true })
       .then(stream => {
         const track = stream.getVideoTracks()[0];
         track.applyConstraints({
@@ -45,7 +45,7 @@ export function CameraControls({ streamMediaRef }: { streamMediaRef: React.RefOb
   const zoomOut = () => {
     setZoomLevel(prev => Math.max(prev - 0.1, 1)); // Min zoom level 1x
     // Implement zoom-out logic here
-    navigatorRef.current!.mediaDevices.getUserMedia({ video: true })
+    navigatorRef.current?.mediaDevices.getUserMedia({ video: true })
       .then(stream => {
         const track = stream.getVideoTracks()[0];
         track.applyConstraints({
