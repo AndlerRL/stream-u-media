@@ -1,13 +1,19 @@
-'use client'
+"use client";
 
 import { EventCardDrawer } from "@/components/pages/event-card-drawer";
 import { CameraControls } from "@/components/shared/camera-controls";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Tables } from "@/supabase/database.types";
+import type { Tables } from "@/supabase/database.types";
 import { useSession } from "@supabase/auth-helpers-react";
-import { Disc3Icon, HeartIcon, MessageCircleIcon, ShareIcon, SparklesIcon } from "lucide-react";
+import {
+  Disc3Icon,
+  HeartIcon,
+  MessageCircleIcon,
+  ShareIcon,
+  SparklesIcon,
+} from "lucide-react";
 import { useSetState } from "react-use";
 
 const defaultState = {
@@ -15,9 +21,10 @@ const defaultState = {
   openChat: false,
   openShare: false,
   openAi: false,
-}
+};
 
-const DEFAULT_AVATAR = 'https://api.dicebear.com/9.x/adventurer/svg?seed=12346789'
+const DEFAULT_AVATAR =
+  "https://api.dicebear.com/9.x/adventurer/svg?seed=12346789";
 
 export function VideoUI({
   eventData,
@@ -40,92 +47,109 @@ export function VideoUI({
 }: VideoUIPropsWithStreamer) {
   const session = useSession();
   const [state, setState] = useSetState<{
-    openProfile: boolean,
-    openChat: boolean,
-    openShare: boolean,
-    openAi: boolean,
-  }>(defaultState)
-  const userData = session?.user.user_metadata
+    openProfile: boolean;
+    openChat: boolean;
+    openShare: boolean;
+    openAi: boolean;
+  }>(defaultState);
+  const userData = session?.user.user_metadata;
 
-  const drawerOpen = Object.keys(state).find((key) => state[key as keyof typeof state]);
+  const drawerOpen = Object.keys(state).find(
+    (key) => state[key as keyof typeof state],
+  );
 
-  const toggleDrawer = (drawer: 'openProfile' | 'openChat' | 'openShare' | 'openAi') => {
-    setState((state) => ({ [drawer]: !state[drawer] }))
+  const toggleDrawer = (
+    drawer: "openProfile" | "openChat" | "openShare" | "openAi",
+  ) => {
+    setState((state) => ({ [drawer]: !state[drawer] }));
 
-    const { openAi, openProfile, openChat, openShare } = state
+    const { openAi, openProfile, openChat, openShare } = state;
 
-    if (drawer === 'openProfile') {
+    if (drawer === "openProfile") {
       if (openProfile) {
         onOpenAvatar?.();
       }
-    } else if (drawer === 'openChat') {
+    } else if (drawer === "openChat") {
       if (openChat) {
         onOpenChat?.();
       }
-    } else if (drawer === 'openShare') {
+    } else if (drawer === "openShare") {
       if (openShare) {
         onShareAction?.();
       }
-    } else if (drawer === 'openAi') {
+    } else if (drawer === "openAi") {
       if (openAi) {
         onToggleAiNarrator?.();
       }
     }
-  }
+  };
 
-  const mockUpDrawerData = (drawer: 'openProfile' | 'openChat' | 'openShare' | 'openAi') => {
+  const mockUpDrawerData = (
+    drawer: "openProfile" | "openChat" | "openShare" | "openAi",
+  ) => {
     const data = {
       openProfile: {
-        title: 'Profile',
-        description: 'User profile information might go here...',
-        action: 'View Profile',
+        title: "Profile",
+        description: "User profile information might go here...",
+        action: "View Profile",
       },
       openChat: {
-        title: 'Chat',
-        description: 'Chat with other viewers and the streamer...',
-        action: 'Join Chat',
+        title: "Chat",
+        description: "Chat with other viewers and the streamer...",
+        action: "Join Chat",
       },
       openShare: {
-        title: 'Share',
-        description: 'Share this stream with your friends...',
-        action: 'Share Stream',
+        title: "Share",
+        description: "Share this stream with your friends...",
+        action: "Share Stream",
       },
       openAi: {
-        title: 'AI Narrator',
-        description: 'Enable AI Narrator to describe the stream...',
-        action: 'Enable AI Narrator',
+        title: "AI Narrator",
+        description: "Enable AI Narrator to describe the stream...",
+        action: "Enable AI Narrator",
       },
-    }
+    };
 
     return data[drawer];
-  }
+  };
 
-
-  console.log("drawerOpen", drawerOpen)
+  console.log("drawerOpen", drawerOpen);
 
   return (
-    <section className={cn('video-wrapper', { 'max-h-[110%]': !isStreamStart })}>
+    <section
+      className={cn("video-wrapper", { "max-h-[110%]": !isStreamStart })}
+    >
       {error && <div className="error">{error}</div>}
 
       {streamer || isStreamStart ? (
         <>
           <video
-            className={cn('video-preview', { 'hidden': previewUrl && (!isStreaming && streamer) })}
+            className={cn("video-preview", {
+              hidden: previewUrl && !isStreaming && streamer,
+            })}
             ref={streamerVideoRef}
             playsInline
             autoPlay
             muted
           />
-          {streamer && <video
-            className={cn('video-preview', { 'hidden': !previewUrl || (isStreaming && streamer) })}
-            src={previewUrl}
-            controls
-          />}
+          {streamer && (
+            <video
+              className={cn("video-preview", {
+                hidden: !previewUrl || (isStreaming && streamer),
+              })}
+              src={previewUrl}
+              controls
+            >
+              <track kind="captions" srcLang="en" label="English captions" />
+            </video>
+          )}
         </>
       ) : null}
 
       {!streamer && !isStreamStart && (
-        <div className="video-preview video-preview--no-video">Waiting for stream to start...</div>
+        <div className="video-preview video-preview--no-video">
+          Waiting for stream to start...
+        </div>
       )}
 
       {streamer && streamMediaRef?.current && (
@@ -135,13 +159,21 @@ export function VideoUI({
       {/* User Info */}
       <div className="controls controls--event-details">
         <h3 className="font-bold">@{userData?.username}</h3>
-        <p className="text-sm">stream live event description might go here...</p>
+        <p className="text-sm">
+          stream live event description might go here...
+        </p>
       </div>
 
       {/* Right Side CTAs */}
       <div className="controls controls--social h-1/2 md:h-1/3">
-        <Avatar className="fixed size-14 border-2 top-10 bg-accent" onClick={() => toggleDrawer('openProfile')}>
-          <AvatarImage src={userData?.avatar || DEFAULT_AVATAR} alt="@username" />
+        <Avatar
+          className="fixed size-14 border-2 top-10 bg-accent"
+          onClick={() => toggleDrawer("openProfile")}
+        >
+          <AvatarImage
+            src={userData?.avatar || DEFAULT_AVATAR}
+            alt="@username"
+          />
           <AvatarFallback>UN</AvatarFallback>
         </Avatar>
 
@@ -150,18 +182,42 @@ export function VideoUI({
         </Button>
         <span className="text-xs font-extrabold drop-shadow-lg">100k</span>
 
-        <Button size="icon" variant="ghost" onClick={() => toggleDrawer('openChat')}>
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={() => toggleDrawer("openChat")}
+        >
           <MessageCircleIcon className="h-8 w-8 text-foreground" />
         </Button>
         <span className="text-xs font-extrabold drop-shadow-lg">1k</span>
 
-        <Button size="icon" variant="ghost" className={cn({ 'hidden': streamer })} onClick={() => toggleDrawer('openShare')}>
+        <Button
+          size="icon"
+          variant="ghost"
+          className={cn({ hidden: streamer })}
+          onClick={() => toggleDrawer("openShare")}
+        >
           <ShareIcon className="h-8 w-8 text-foreground" />
         </Button>
-        <span className={cn('text-xs font-extrabold drop-shadow-lg', { 'hidden': streamer })}>500</span>
+        <span
+          className={cn("text-xs font-extrabold drop-shadow-lg", {
+            hidden: streamer,
+          })}
+        >
+          500
+        </span>
 
-        <Button size="icon" variant="ghost" className="relative" onClick={() => toggleDrawer('openAi')}>
-          <Disc3Icon className={cn('h-8 w-8 text-foreground', { 'animate-spin': isStreamStart || streamerVideoRef.current })} />
+        <Button
+          size="icon"
+          variant="ghost"
+          className="relative"
+          onClick={() => toggleDrawer("openAi")}
+        >
+          <Disc3Icon
+            className={cn("h-8 w-8 text-foreground", {
+              "animate-spin": isStreamStart || streamerVideoRef.current,
+            })}
+          />
           <SparklesIcon className="absolute -top-1.5 right-0 h-5 w-5 text-foreground" />
         </Button>
       </div>
@@ -203,22 +259,32 @@ export function VideoUI({
         <div className="controls controls--recording">
           {!isStreaming ? (
             <>
-              <Button onClick={onStreamingStart}>Start Streaming and Recording</Button>
-              {previewUrl && <Button onClick={onUploadStreamedVideo}>Upload video</Button>}
+              <Button onClick={onStreamingStart}>
+                Start Streaming and Recording
+              </Button>
+              {previewUrl && (
+                <Button onClick={onUploadStreamedVideo}>Upload video</Button>
+              )}
             </>
           ) : (
-            <Button onClick={onStreamingStop}>Stop Streaming and Recording</Button>
+            <Button onClick={onStreamingStop}>
+              Stop Streaming and Recording
+            </Button>
           )}
         </div>
       )}
 
-      <EventCardDrawer onClose={() => setState(defaultState)} open={Boolean(drawerOpen)} drawerData={mockUpDrawerData(drawerOpen as any)} />
+      <EventCardDrawer
+        onClose={() => setState(defaultState)}
+        open={Boolean(drawerOpen)}
+        drawerData={mockUpDrawerData(drawerOpen as keyof typeof state)}
+      />
     </section>
-  )
+  );
 }
 
 export interface VideoUIProps {
-  eventData: Tables<'events'>;
+  eventData: Tables<"events">;
   error: string | null;
   streamerVideoRef: React.RefObject<HTMLVideoElement>;
   streamMediaRef?: React.RefObject<MediaStream>;
@@ -237,23 +303,50 @@ export interface VideoUIProps {
   onToggleAiNarrator?: () => void;
 }
 
-export type RequiredIfStreamer<T extends {
-  streamMediaRef?: React.RefObject<MediaStream>;
-  onStreamingStart?: VideoUIProps['onStreamingStart'];
-  onUploadStreamedVideo?: VideoUIProps['onUploadStreamedVideo'];
-  onStreamingStop?: VideoUIProps['onStreamingStop'];
-  onOpenChat?: VideoUIProps['onOpenChat'];
-  onOpenAvatar?: VideoUIProps['onOpenAvatar'];
-  onToggleAiNarrator?: VideoUIProps['onToggleAiNarrator'];
-}> = T & { streamer: true } & Required<Pick<T, 'onStreamingStart' | 'onUploadStreamedVideo' | 'onStreamingStop' | 'streamMediaRef' | 'onOpenChat' | 'onOpenAvatar' | 'onToggleAiNarrator'>>;
+export type RequiredIfStreamer<
+  T extends {
+    streamMediaRef?: React.RefObject<MediaStream>;
+    onStreamingStart?: VideoUIProps["onStreamingStart"];
+    onUploadStreamedVideo?: VideoUIProps["onUploadStreamedVideo"];
+    onStreamingStop?: VideoUIProps["onStreamingStop"];
+    onOpenChat?: VideoUIProps["onOpenChat"];
+    onOpenAvatar?: VideoUIProps["onOpenAvatar"];
+    onToggleAiNarrator?: VideoUIProps["onToggleAiNarrator"];
+  },
+> = T & { streamer: true } & Required<
+  Pick<
+    T,
+    | "onStreamingStart"
+    | "onUploadStreamedVideo"
+    | "onStreamingStop"
+    | "streamMediaRef"
+    | "onOpenChat"
+    | "onOpenAvatar"
+    | "onToggleAiNarrator"
+  >
+>;
 
-export type RequiredIfNotStreamer<T extends {
-  onNewRecording?: VideoUIProps['onNewRecording'];
-  onOpenChat?: VideoUIProps['onOpenChat'];
-  onOpenAvatar?: VideoUIProps['onOpenAvatar'];
-  onLikeAction?: VideoUIProps['onLikeAction'];
-  onShareAction?: VideoUIProps['onShareAction'];
-  onToggleAiNarrator?: VideoUIProps['onToggleAiNarrator'];
-}> = T & { streamer?: false } & Required<Pick<T, 'onNewRecording' | 'onOpenChat' | 'onOpenAvatar' | 'onLikeAction' | 'onShareAction' | 'onToggleAiNarrator'>>;
+export type RequiredIfNotStreamer<
+  T extends {
+    onNewRecording?: VideoUIProps["onNewRecording"];
+    onOpenChat?: VideoUIProps["onOpenChat"];
+    onOpenAvatar?: VideoUIProps["onOpenAvatar"];
+    onLikeAction?: VideoUIProps["onLikeAction"];
+    onShareAction?: VideoUIProps["onShareAction"];
+    onToggleAiNarrator?: VideoUIProps["onToggleAiNarrator"];
+  },
+> = T & { streamer?: false } & Required<
+  Pick<
+    T,
+    | "onNewRecording"
+    | "onOpenChat"
+    | "onOpenAvatar"
+    | "onLikeAction"
+    | "onShareAction"
+    | "onToggleAiNarrator"
+  >
+>;
 
-export type VideoUIPropsWithStreamer = RequiredIfNotStreamer<VideoUIProps> | RequiredIfStreamer<VideoUIProps>;
+export type VideoUIPropsWithStreamer =
+  | RequiredIfNotStreamer<VideoUIProps>
+  | RequiredIfStreamer<VideoUIProps>;

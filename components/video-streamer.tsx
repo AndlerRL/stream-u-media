@@ -43,6 +43,9 @@ export function VideoStreamer({
 
     if (videoRef.current) {
       videoRef.current.src = URL.createObjectURL(mediaSourceRef.current);
+      videoRef.current.play();
+      videoRef.current.muted = false;
+      videoRef.current.controls = false;
     }
     const onSourceOpen = () => {
       try {
@@ -74,11 +77,16 @@ export function VideoStreamer({
     if (
       chunksQueue.current.length > 0 &&
       sourceBufferRef.current &&
-      !sourceBufferRef.current.updating
+      !sourceBufferRef.current.updating &&
+      mediaSourceRef.current &&
+      mediaSourceRef.current.readyState === "open"
     ) {
       const chunk = chunksQueue.current.shift();
       try {
+        if (!chunk) throw new Error("Chunk is empty");
+
         sourceBufferRef.current.appendBuffer(chunk);
+        console.log("Appended chunk to source buffer: ", chunk);
       } catch (e) {
         console.error("Error appending buffer:", e);
       }
@@ -123,9 +131,10 @@ export function VideoStreamer({
     });
 
     socketRef.current.on("stream-chunk", (chunk: ArrayBuffer) => {
-      console.log("Received stream chunk", chunk);
       const uint8Array = new Uint8Array(chunk);
+
       chunksQueue.current.push(uint8Array);
+
       if (sourceBufferRef.current && !sourceBufferRef.current.updating) {
         appendNextChunk();
       }

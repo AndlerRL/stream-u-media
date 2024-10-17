@@ -46,21 +46,23 @@ export function VideoRecorder({
     };
   }, [eventData.id]);
 
+  const startMediaStream = async () => {
+    console.log("Starting media stream");
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true,
+    });
+    streamMediaRef.current = stream;
+
+    if (streamerVideoRef.current) {
+      streamerVideoRef.current.srcObject = stream;
+    }
+    console.log("Local video preview set");
+    console.log("Audio tracks:", stream.getAudioTracks());
+  };
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    const startMediaStream = async () => {
-      console.log("Starting media stream");
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
-      });
-      streamMediaRef.current = stream;
-
-      if (streamerVideoRef.current) {
-        streamerVideoRef.current.srcObject = stream;
-      }
-      console.log("Local video preview set");
-    };
-
     startMediaStream();
   }, []);
 
@@ -69,6 +71,9 @@ export function VideoRecorder({
       setError("No media stream available");
       return;
     }
+
+    startMediaStream();
+
     try {
       setIsStreaming(true);
       console.log("Emitting start-stream event");
@@ -82,6 +87,7 @@ export function VideoRecorder({
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           chunksRef.current.push(event.data);
+          console.log("Data available:", event.data);
           // Send chunk via Socket.IO
           const reader = new FileReader();
           reader.onloadend = () => {

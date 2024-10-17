@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
         .email?.split("@")[0]
         .replace(/[^a-zA-Z0-9]/g, "");
       session.user.user_metadata.username = generateUsername(sanitizedEmail || "user");
-      session.user.user_metadata.avatar = `https://api.dicebear.com/9.x/adventurer/svg?seed=${session!.user.user_metadata.username || session!.user.email}`;
+      session.user.user_metadata.avatar = `https://api.dicebear.com/9.x/adventurer/svg?seed=${session.user.user_metadata.username}`;
 
       await supabase.auth.updateUser({
         data: session.user.user_metadata,

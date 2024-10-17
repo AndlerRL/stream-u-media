@@ -1,4 +1,4 @@
-import type { Server } from "http";
+import type { Server } from "node:http";
 import { type Socket, Server as SocketIOServer } from "socket.io";
 
 export class Streamer {
