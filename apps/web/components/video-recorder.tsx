@@ -3,6 +3,7 @@
 import { VideoUI } from "@/components/shared/video-ui";
 import { createClient } from "@/utils/supabase/client";
 import type { SupaTypes } from "@services/supabase";
+import { useSession } from "@supabase/auth-helpers-react";
 import { useEffect, useRef, useState } from "react";
 import { type Socket, io } from "socket.io-client";
 
@@ -26,6 +27,7 @@ export function VideoRecorder({
   const socketRef = useRef<Socket | null>(null);
 
   const supabase = createClient();
+  const session = useSession();
 
   useEffect(() => {
     socketRef.current = io();
@@ -80,7 +82,7 @@ export function VideoRecorder({
         .from("streams")
         .insert({
           event_id: eventData.id,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          user_id: session?.user.id,
           status: "live",
         })
         .select()
@@ -148,7 +150,7 @@ export function VideoRecorder({
       .from("streams")
       .update({ status: "ended" })
       .eq("event_id", eventData.id)
-      .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
+      .eq("user_id", session?.user.id as string)
       .eq("status", "live")
       .select("id");
 
