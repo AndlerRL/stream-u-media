@@ -1,0 +1,8 @@
+{
+  "/page": "app/page.js",
+  "/(auth-pages)/sign-in/page": "app/(auth-pages)/sign-in/page.js",
+  "/(auth-pages)/sign-in/otp/page": "app/(auth-pages)/sign-in/otp/page.js",
+  "/events/page": "app/events/page.js",
+  "/events/[slug]/page": "app/events/[slug]/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js"
+}

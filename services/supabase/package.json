@@ -1,0 +1,21 @@
+{
+  "name": "@service/supabase",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "supabase module for smartevm",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "supa:gen": "bun run types && bun run schemas",
+    "types": "supabase gen types gen types --lang=typescript > src/database.types.ts",
+    "schemas": "supabase-to-zod --input src/supa.types.ts --output src/database.schemas.ts"
+  },
+  "author": "andlerrl",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "supabase-to-zod": "^1.0.7",
+    "supabase": "^1.187.3"
+  }
+}
