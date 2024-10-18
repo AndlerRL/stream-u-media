@@ -89,37 +89,38 @@ The workspace is organized as follows:
 
 1. **Clone the repository**:
 
-    ```sh
-    git clone https://github.com/your-repo/event-streaming-app.git
-    cd event-streaming-app
-    ```
+   ```sh
+   git clone https://github.com/your-repo/event-streaming-app.git
+   cd event-streaming-app
+   ```
 
 2. **Install dependencies**:
 
-    ```sh
-    npm install
-    ```
+   ```sh
+   npm install
+   ```
 
 3. **Set up environment variables**:
-    - Copy [`.env.example`](/.env.example) to [`.env`](./.env) and populate it with your environment-specific values.
+
+   - Copy [`.env.example`](/.env.example) to [`.env`](./.env) and populate it with your environment-specific values.
 
 4. **Run the development server**:
 
-    ```sh
-    npm run dev
-    ```
+   ```sh
+   npm run dev
+   ```
 
 5. **Build the project**:
 
-    ```sh
-    npm run build
-    ```
+   ```sh
+   npm run build
+   ```
 
 6. **Start the production server**:
 
-    ```sh
-    npm start
-    ```
+   ```sh
+   npm start
+   ```
 
 ### Dependencies
 
@@ -139,6 +140,18 @@ The project uses the following dependencies:
 - **@supabase/ssr**: [Documentation](https://supabase.com/docs/guides/auth/server-side/nextjs)
 
 For a complete list of dependencies, refer to the [`package.json`](./package.json") file.
+
+---
+
+## Product Design Problem and Solution
+
+### Problem
+
+In the current digital landscape, sharing live experiences at events is often fragmented and lacks a cohesive platform. Users typically rely on general social media platforms that are not optimized for event-specific content, leading to a diluted and less engaging experience. Additionally, these platforms do not provide a unified view of an event from multiple perspectives, making it difficult for users to fully immerse themselves in the event atmosphere.
+
+### Solution
+
+Event Streaming App addresses these issues by providing a dedicated platform for live event streaming. The app's event-specific rooms collect all related streams in one place, offering users a comprehensive and immersive experience. The short-form content format ensures high engagement, while features like AI narration and social media integration enhance accessibility and sharing capabilities. By focusing on live events, the app creates a unique and engaging way for users to share and experience events in real-time.
 
 ---
 

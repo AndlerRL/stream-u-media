@@ -24,9 +24,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body>
-        <main className="layout_container">
-          {children}
-        </main>
+        {children}
       </body>
     </html>
   );

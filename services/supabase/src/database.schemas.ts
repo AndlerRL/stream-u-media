@@ -87,6 +87,31 @@ export const tagsUpdateSchema = z.object({
 
 export const tagsRelationshipsSchema = z.tuple([]);
 
+export const usersEventsRowSchema = z.object({
+  event_id: z.number(),
+  user_id: z.string(),
+});
+
+export const usersEventsInsertSchema = z.object({
+  event_id: z.number(),
+  user_id: z.string(),
+});
+
+export const usersEventsUpdateSchema = z.object({
+  event_id: z.number().optional(),
+  user_id: z.string().optional(),
+});
+
+export const usersEventsRelationshipsSchema = z.tuple([
+  z.object({
+    foreignKeyName: z.literal("users_events_event_id_fkey"),
+    columns: z.tuple([z.literal("event_id")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("events"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+]);
+
 export const videosRowSchema = z.object({
   created_at: z.string(),
   description: z.string().nullable(),

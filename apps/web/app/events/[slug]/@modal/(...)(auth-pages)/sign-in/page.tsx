@@ -6,7 +6,7 @@ export default function Login({ searchParams: { token } }: { searchParams: { tok
   const session = useSession();
 
   return (
-    <Dialog open={!Boolean(session?.user.id)}>
+    <Dialog open={!session?.user.id}>
       <DialogContent>
         <h1>Login from the dialog!</h1>
         <OTPForm token={token} />
