@@ -65,7 +65,7 @@ function EventsComponent({
       </div>
 
       <h2 className="font-bold text-2xl">Enlisted Events</h2>
-      <ul className="w-full flex flex-col gap-10 items-center">
+      <ul className="w-full flex flex-col gap-10 items-center h-full">
         {events?.map((event) => {
           const isEventReady = new Date(event.start_at).getDate() < Date.now();
           const isEventOver = !isEventReady && new Date(event.ends_at).getDate() < Date.now();
@@ -89,7 +89,7 @@ function EventsComponent({
             </li>
           )
         })}
-        <li className="flex flex-col items-center gap-4">
+        <li className="w-full flex flex-col items-center gap-4 mt-auto py-12 border-t border-foreground/30">
           <EnlistNewEvent events={events} />
         </li>
       </ul>
