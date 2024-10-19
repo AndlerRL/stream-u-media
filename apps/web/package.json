@@ -1,5 +1,5 @@
 {
-  "name": "@web/stream-u-media",
+  "name": "@web/mintmoment",
   "private": true,
   "scripts": {
     "dev": "ts-node --project tsconfig.server.json server/index.ts",

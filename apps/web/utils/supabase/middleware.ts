@@ -21,15 +21,15 @@ export const updateSession = async (request: NextRequest) => {
             return request.cookies.getAll();
           },
           setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value }) =>
-              request.cookies.set(name, value),
-            );
+            for (const { name, value } of cookiesToSet) {
+              request.cookies.set(name, value);
+            }
             response = NextResponse.next({
               request,
             });
-            cookiesToSet.forEach(({ name, value, options }) =>
-              response.cookies.set(name, value, options),
-            );
+            for (const { name, value, options } of cookiesToSet) {
+              response.cookies.set(name, value, options);
+            }
           },
         },
       },
@@ -41,7 +41,10 @@ export const updateSession = async (request: NextRequest) => {
 
     // protected routes
     if (request.nextUrl.pathname.startsWith("/events") && user.error) {
-      return NextResponse.redirect(new URL("/sign-in", request.url));
+      const currentPath = request.nextUrl.pathname;
+      const redirectionUrl = new URL('/sign-in', request.url);
+      redirectionUrl.searchParams.set('redirect_to', currentPath);
+      return NextResponse.redirect(redirectionUrl);
     }
 
     if (request.nextUrl.pathname === "/" && !user.error) {

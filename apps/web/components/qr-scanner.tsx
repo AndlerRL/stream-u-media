@@ -34,8 +34,8 @@ export function QRScanner({
     // Assume the QR code contains the event ID/slug
     const digestedResults = qrResults.replace(/(https|http):\/\/.*\//, "");
     const redirectionLink = !session?.user.id
-      ? `/event/${digestedResults}`
-      : `/sign-in?redirect=/event/${digestedResults}`;
+      ? `/events/${digestedResults}`
+      : `/sign-in?redirect=/events/${digestedResults}`;
     router.push(redirectionLink);
   };
 

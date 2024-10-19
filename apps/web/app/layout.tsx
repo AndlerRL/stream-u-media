@@ -7,7 +7,7 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Stream-U-Media",
+  title: "MintMoment",
   description: "Stream your media with ease!",
 };
 
@@ -23,7 +23,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en">
-      <body>
+      <body className="flex flex-col w-full justify-start items-center">
         {children}
       </body>
     </html>
