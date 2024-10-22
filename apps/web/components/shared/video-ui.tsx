@@ -67,10 +67,8 @@ export function VideoUI({
 
     if (isStreamStart) {
       streamerVideoRef.current.srcObject = streamMediaRef?.current || null;
-    } else {
-      streamerVideoRef.current.srcObject = null;
     }
-  }, [isStreamStart])
+  }, [isStreamStart, streamerVideoRef.current, streamMediaRef?.current]);
 
   useEffect(() => {
     if (!streamerVideoRef.current || !streamMediaRef) return;
@@ -169,7 +167,6 @@ export function VideoUI({
             ref={streamerVideoRef}
             playsInline
             autoPlay
-            muted={state.enableSound}
           />
           {streamer && (
             <video

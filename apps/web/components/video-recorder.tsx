@@ -58,6 +58,10 @@ export function VideoRecorder({
     });
     streamMediaRef.current = stream;
 
+    streamMediaRef.current.getAudioTracks().forEach((track) => {
+      track.enabled = true;
+    });
+
     if (streamerVideoRef.current) {
       streamerVideoRef.current.srcObject = stream;
     }

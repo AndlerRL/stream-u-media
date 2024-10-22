@@ -60,16 +60,20 @@ export function VideoStreamer({
     }
   };
 
-  const joinNewStream = (streamId: string) => {
+  const joinNewStream = async (streamId: string) => {
     resetStream();
     // Set up new stream
     setCurrentStreamId(streamId);
     setIsStreamStart(true);
 
     // Initialize new MediaSource
-    setTimeout(() => {
-      initMediaSource();
-    }, 0);
+    setTimeout(async () => {
+      await initMediaSource();
+      if (!socketRef.current?.connected) {
+        console.log("Reconnecting to Socket.IO server");
+        socketRef.current?.emit("connect");
+      }
+    }, 100);
   };
 
   const initMediaSource = async () => {
@@ -133,7 +137,7 @@ export function VideoStreamer({
           console.log("Setting video source to:", mediaUrl);
           videoRef.current.src = mediaUrl;
           videoRef.current.autoplay = true;
-          videoRef.current.muted = true;
+          videoRef.current.muted = false;
           videoRef.current.playsInline = true;
         }
       });
@@ -197,21 +201,39 @@ export function VideoStreamer({
       setIsStreamStart(true);
 
       // Add a small delay to ensure socket connection is ready
-      setTimeout(() => {
+      setTimeout(async () => {
         console.log("Initializing MediaSource for first stream");
-        initMediaSource();
-        socketRef.current?.emit("join-room", eventData.id);
-      }, 100);
+        await initMediaSource();
+        if (!socketRef.current?.connected) {
+          console.log("Reconnecting to Socket.IO server");
+          socketRef.current?.emit("connect");
+        }
+      }, 140);
     }
   }, [activeStreams]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  const getAllUserStreamers = async () => {
+    for await (const stream of activeStreams) {
+      if (stream.id !== currentStreamId) {
+        // const userData = await getUserData(stream.user_id as string);
+        // console.log('userData', userData)
+        toast(`A user is currently streaming.`, {
+          action: {
+            label: <span>Watch</span>,
+            onClick: () => joinNewStream(stream.id),
+          },
+        });
+      }
+    }
+  }
+
   useEffect(() => {
     socketRef.current = io();
 
-    socketRef.current.on("connect", () => {
+    socketRef.current.on("connect", async () => {
       console.log("Viewer connected to Socket.IO server");
       socketRef.current?.emit("join-room", eventData.id);
+      await getAllUserStreamers()
     });
 
     socketRef.current.on("start-stream", async ({ streamId, roomId }) => {
@@ -269,23 +291,6 @@ export function VideoStreamer({
       setCurrentStreamId(null);
       return;
     }
-
-    const getAllUserStreamers = async () => {
-      for await (const stream of activeStreams) {
-        if (stream.id !== currentStreamId) {
-          // const userData = await getUserData(stream.user_id as string);
-          // console.log('userData', userData)
-          toast(`A user is currently streaming.`, {
-            action: {
-              label: <span>Watch</span>,
-              onClick: () => joinNewStream(stream.id),
-            },
-          });
-        }
-      }
-    }
-
-    getAllUserStreamers();
   }, [activeStreams, currentStreamId]);
 
   return (
