@@ -10,17 +10,22 @@ import { useSession } from "@supabase/auth-helpers-react";
 import {
   Disc3Icon,
   HeartIcon,
-  MessageCircleIcon,
   ShareIcon,
   SparklesIcon,
+  Volume2Icon,
+  VolumeOffIcon
 } from "lucide-react";
+import { useEffect } from "react";
 import { useSetState } from "react-use";
 
 const defaultState = {
-  openProfile: false,
-  openChat: false,
-  openShare: false,
-  openAi: false,
+  drawers: {
+    openProfile: false,
+    openChat: false,
+    openShare: false,
+    openAi: false,
+  },
+  enableSound: false,
 };
 
 const DEFAULT_AVATAR =
@@ -47,23 +52,53 @@ export function VideoUI({
 }: VideoUIPropsWithStreamer) {
   const session = useSession();
   const [state, setState] = useSetState<{
-    openProfile: boolean;
-    openChat: boolean;
-    openShare: boolean;
-    openAi: boolean;
+    drawers: {
+      openProfile: boolean;
+      openChat: boolean;
+      openShare: boolean;
+      openAi: boolean;
+    }
+    enableSound: boolean;
   }>(defaultState);
   const userData = session?.user.user_metadata;
 
-  const drawerOpen = Object.keys(state).find(
+  useEffect(() => {
+    if (!streamerVideoRef.current) return;
+
+    if (isStreamStart) {
+      streamerVideoRef.current.srcObject = streamMediaRef?.current || null;
+    } else {
+      streamerVideoRef.current.srcObject = null;
+    }
+  }, [isStreamStart])
+
+  useEffect(() => {
+    if (!streamerVideoRef.current || !streamMediaRef) return;
+
+    streamerVideoRef.current.muted = state.enableSound;
+    streamMediaRef.current?.getAudioTracks().forEach((track) => {
+      track.enabled = state.enableSound;
+    });
+  }, [state.enableSound])
+
+  console.log('streamerVideoRef.current.muted', streamerVideoRef.current?.muted)
+  console.log('streamerVideoRef.current.muted', streamerVideoRef.current?.volume)
+
+  const drawerOpen = Object.keys(state.drawers).find(
     (key) => state[key as keyof typeof state],
   );
 
   const toggleDrawer = (
     drawer: "openProfile" | "openChat" | "openShare" | "openAi",
   ) => {
-    setState((state) => ({ [drawer]: !state[drawer] }));
+    setState((state) => ({
+      drawers: {
+        ...state.drawers,
+        [drawer]: !state.drawers[drawer],
+      },
+    }));
 
-    const { openAi, openProfile, openChat, openShare } = state;
+    const { openAi, openProfile, openChat, openShare } = state.drawers;
 
     if (drawer === "openProfile") {
       if (openProfile) {
@@ -115,6 +150,10 @@ export function VideoUI({
 
   console.log("drawerOpen", drawerOpen);
 
+  const toggleSound = () => {
+    setState({ enableSound: !state.enableSound });
+  }
+
   return (
     <section
       className={cn("video-wrapper", { "max-h-[110%]": !isStreamStart })}
@@ -130,7 +169,7 @@ export function VideoUI({
             ref={streamerVideoRef}
             playsInline
             autoPlay
-            muted
+            muted={state.enableSound}
           />
           {streamer && (
             <video
@@ -177,19 +216,23 @@ export function VideoUI({
           <AvatarFallback>UN</AvatarFallback>
         </Avatar>
 
+        <Button size="icon" variant="ghost" onClick={toggleSound}>
+          {state.enableSound ? <Volume2Icon className="h-8 w-8 text-foreground" /> : <VolumeOffIcon className="h-8 w-8 text-foreground" />}
+        </Button>
+
         <Button size="icon" variant="ghost" onClick={onLikeAction}>
           <HeartIcon className="h-8 w-8 text-foreground" />
         </Button>
         <span className="text-xs font-extrabold drop-shadow-lg">100k</span>
 
-        <Button
+        {/* <Button
           size="icon"
           variant="ghost"
           onClick={() => toggleDrawer("openChat")}
         >
           <MessageCircleIcon className="h-8 w-8 text-foreground" />
         </Button>
-        <span className="text-xs font-extrabold drop-shadow-lg">1k</span>
+        <span className="text-xs font-extrabold drop-shadow-lg">1k</span> */}
 
         <Button
           size="icon"
