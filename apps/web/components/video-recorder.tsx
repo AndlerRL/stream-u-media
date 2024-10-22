@@ -4,8 +4,9 @@ import { VideoUI } from "@/components/shared/video-ui";
 import { createClient } from "@/utils/supabase/client";
 import type { SupaTypes } from "@services/supabase";
 import { useSession } from "@supabase/auth-helpers-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { type Socket, io } from "socket.io-client";
+import { toast } from "sonner";
 
 interface VideoRecorderProps {
   eventData: SupaTypes.Tables<"events">;
@@ -40,6 +41,7 @@ export function VideoRecorder({
     socketRef.current.on("viewer-joined", (viewerId) => {
       console.log("Viewer joined:", viewerId);
       // You might want to do something when a viewer joins, like sending initial stream data
+      toast.info(`Viewer joined the stream: ${viewerId}`);
     });
 
     return () => {
@@ -69,6 +71,10 @@ export function VideoRecorder({
   }, []);
 
   const startStreamingAndRecording = async () => {
+    if (!session?.user.id || !eventData.id) {
+      setError("No user session available");
+      return;
+    }
     if (!streamMediaRef.current) {
       setError("No media stream available");
       return;
@@ -82,7 +88,7 @@ export function VideoRecorder({
         .from("streams")
         .insert({
           event_id: eventData.id,
-          user_id: session?.user.id,
+          user_id: session.user.id,
           status: "live",
         })
         .select()
@@ -94,11 +100,10 @@ export function VideoRecorder({
       console.log("Stream started:", streamData);
 
       // Emit start-stream event with stream ID
-      socketRef.current?.emit("start-stream", { eventId: eventData.id, streamId: streamData.id });
+      console.log("Emitting start-stream event");
+      socketRef.current?.emit("start-stream", { roomId: eventData.id, streamId: streamData.id });
 
       setIsStreaming(true);
-      console.log("Emitting start-stream event");
-      socketRef.current?.emit("start-stream", eventData.id);
 
       // Set up MediaRecorder for local recording and streaming
       const mediaRecorder = new MediaRecorder(streamMediaRef.current, {
@@ -115,6 +120,7 @@ export function VideoRecorder({
             const arrayBuffer = reader.result as ArrayBuffer;
             socketRef.current?.emit("stream-chunk", {
               roomId: eventData.id,
+              streamId: streamData.id,
               chunk: arrayBuffer,
             });
           };
@@ -132,7 +138,11 @@ export function VideoRecorder({
     }
   };
 
-  const stopStreamingAndRecording = async () => {
+  const stopStreamingAndRecording = useCallback(async () => {
+    if (!session?.user.id || !isStreaming || !eventData.id) {
+      setError("No active stream available");
+      return;
+    }
     if (
       mediaRecorderRef.current &&
       mediaRecorderRef.current.state !== "inactive"
@@ -145,14 +155,18 @@ export function VideoRecorder({
       }
     }
 
+    console.log('eventData', eventData)
+    console.log('session.user', session.user)
+
     // Update stream record in Supabase
     const { data: streamData, error: streamError } = await supabase
       .from("streams")
       .update({ status: "ended" })
       .eq("event_id", eventData.id)
-      .eq("user_id", session?.user.id as string)
+      .eq("user_id", session.user.id)
       .eq("status", "live")
-      .select("id");
+      .select("id")
+      .single();
 
     if (streamError) {
       console.error("Error updating stream record:", streamError);
@@ -160,9 +174,11 @@ export function VideoRecorder({
       throw streamError;
     }
 
+    console.log(streamData, 'streamData')
+
     setIsStreaming(false);
-    socketRef.current?.emit("end-stream", { eventId: eventData.id, streamId: streamData.id });
-  };
+    socketRef.current?.emit("end-stream", { roomId: eventData.id, streamId: streamData.id });
+  }, [eventData, isStreaming, session?.user, supabase]);
 
   const createPreview = () => {
     const blob = new Blob(chunksRef.current, { type: "video/webm" });

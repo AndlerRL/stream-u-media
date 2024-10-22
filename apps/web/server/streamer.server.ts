@@ -45,16 +45,24 @@ export class Streamer {
     }
   }
 
-  private startStream(socket: Socket, { roomId, streamId }: { roomId: string; streamId: string }) {
+  private startStream(
+    socket: Socket,
+    { roomId, streamId }: { roomId: string; streamId: string }
+  ) {
     if (!this.streamers.has(roomId)) {
       this.streamers.set(roomId, new Set());
     }
     this.streamers.get(roomId)?.add(socket.id);
     socket.to(roomId).emit("start-stream", { streamId });
-    console.log(`User ${socket.id} started stream ${streamId} in room ${roomId}`);
+    console.log(
+      `User ${socket.id} started stream ${streamId} in room ${roomId}`
+    );
   }
 
-  private endStream(socket: Socket, { roomId, streamId }: { roomId: string; streamId: string }) {
+  private endStream(
+    socket: Socket,
+    { roomId, streamId }: { roomId: string; streamId: string }
+  ) {
     this.streamers.get(roomId)?.delete(socket.id);
     socket.to(roomId).emit("end-stream", { streamId });
     console.log(`User ${socket.id} ended stream ${streamId} in room ${roomId}`);
@@ -71,7 +79,17 @@ export class Streamer {
     console.log("User disconnected", socket.id);
   }
 
-  private streamChunk(socket: Socket, { roomId, streamId, chunk }: { roomId: string; streamId: string; chunk: string }) {
-    socket.to(roomId).emit("stream-chunk", { streamId, chunk });
+  private streamChunk(
+    socket: Socket,
+    {
+      roomId,
+      streamId,
+      chunk,
+    }: { roomId: string; streamId: string; chunk: ArrayBuffer }
+  ) {
+    console.log(
+      `Broadcasting stream chunk to room ${roomId} from stream ${streamId}`
+    );
+    socket.to(roomId).emit("stream-chunk", { roomId, streamId, chunk });
   }
 }

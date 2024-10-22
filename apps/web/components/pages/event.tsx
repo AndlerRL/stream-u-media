@@ -148,12 +148,34 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
   const [activeStreams, setActiveStreams] = useState<SupaTypes.Tables<"streams">[]>([]);
 
   useEffect(() => {
+    if (!eventData || activeStreams.length) return;
+    // Init stream state subscription
+    const fetchActiveStreams = async () => {
+      const { data, error } = await supabase
+        .from("streams")
+        // .select("*, auth.users(id, email, user_metadata)")
+        .select("*")
+        .eq("event_id", eventData?.id as number)
+        .eq("status", "live");
+
+      if (error) {
+        console.error("Error fetching active streams:", error);
+        return;
+      }
+
+      setActiveStreams(data);
+    };
+
+    fetchActiveStreams();
+  }, [eventData])
+
+  useEffect(() => {
     if (!eventData) return;
 
     const streamSubscription = supabase
       .channel(`event-${eventData.id}-streams`)
       .on(
-        "postgres_changes",
+        'postgres_changes',
         {
           event: "*",
           schema: "public",
@@ -161,7 +183,7 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
           filter: `event_id=eq.${eventData.id}`,
         },
         (payload) => {
-          console.log("Stream update:", payload);
+          console.log("Stream update ->", payload);
           if (payload.eventType === "INSERT") {
             setActiveStreams((prev) => [...prev, payload.new as SupaTypes.Tables<"streams">]);
           } else if (payload.eventType === "DELETE") {
@@ -169,7 +191,13 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
           }
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) {
+          console.error("Error subscribing to stream updates:", err);
+        }
+
+        console.log("Stream subscription status: ", status);
+      });
 
     const videoSubscription = supabase
       .channel(`event-${eventData.id}-videos`)
