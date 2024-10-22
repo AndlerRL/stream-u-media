@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 
 export async function GET(request: NextRequest) {
   const { searchParams: reqSearchParams } = new URL(request.url);
+  const headers = request.headers;
   const token = reqSearchParams.get("token") ?? "";
   const email = reqSearchParams.get("email") ?? "";
   const type = reqSearchParams.get("type") as EmailOtpType | null;
@@ -36,10 +37,12 @@ export async function GET(request: NextRequest) {
       !("username" in session.user.user_metadata) &&
       !("avatar" in session.user.user_metadata)
     ) {
-      const sanitizedEmail = session.user
-        .email?.split("@")[0]
+      const sanitizedEmail = session.user.email
+        ?.split("@")[0]
         .replace(/[^a-zA-Z0-9]/g, "");
-      session.user.user_metadata.username = generateUsername(sanitizedEmail || "user");
+      session.user.user_metadata.username = generateUsername(
+        sanitizedEmail || "user"
+      );
       session.user.user_metadata.avatar = `https://api.dicebear.com/9.x/adventurer/svg?seed=${session.user.user_metadata.username}`;
 
       await supabase.auth.updateUser({

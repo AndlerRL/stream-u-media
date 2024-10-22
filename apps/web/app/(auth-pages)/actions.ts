@@ -2,30 +2,39 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { encodedRedirect } from "@/utils/utils";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 export const signInAction = async (formData: FormData) => {
+  const reqHeaders = headers();
   const email = formData.get("email") as string;
   const searchParams = formData.get("searchParams");
   const searchParamsObj = JSON.parse(searchParams as string);
   const supabase = createClient();
-  const emailRedirectTo = `/${searchParamsObj.redirect_to || "events"}`;
+  const origin = reqHeaders.get("origin") as string;
+  const emailRedirectTo = `${origin}/${searchParamsObj.redirect_to || "events"}`;
 
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
       shouldCreateUser: true,
       emailRedirectTo,
-    }
+    },
   });
 
   if (error) {
-    console.log('error msg -> ', error.message)
-    console.trace('error trace -> ', error)
-    return encodedRedirect("error", `/sign-in?redirect_to=${emailRedirectTo}`, error.message);
+    console.log("error msg -> ", error.message);
+    console.trace("error trace -> ", error);
+    return encodedRedirect(
+      "error",
+      `/sign-in?redirect_to=${emailRedirectTo.replace(origin, "")}`,
+      error.message
+    );
   }
 
-  return redirect(`/sign-in/otp?redirect_to=${emailRedirectTo}`);
+  return redirect(
+    `/sign-in/otp?redirect_to=${emailRedirectTo.replace(origin, "")}`
+  );
 };
 
 export const signOutAction = async () => {

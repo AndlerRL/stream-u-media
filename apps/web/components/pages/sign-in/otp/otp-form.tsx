@@ -42,7 +42,7 @@ export function OTPForm({ token }: { token: string }) {
   return (
     <form action="/auth/confirm">
       <input type="hidden" name="type" value="email" />
-      <input type="hidden" name="redirect_to" value={`/${searchParams.get("redirect_to") || 'events'}`} />
+      <input type="hidden" name="redirect_to" value={`${searchParams.get("redirect_to") || 'events'}`} />
       <input type="hidden" name="email" value={searchParams.get('email') as string} />
       <InputOTP
         type="text"

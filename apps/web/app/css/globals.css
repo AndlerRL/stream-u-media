@@ -26,11 +26,6 @@
     --radius: 1rem;
   }
   [data-theme="dark"] {
-    /* Name: custom color palette
-       Author: Ilias Ism
-       URL: https://gradient.page */
-
-    /* CSS: .bg-gradient { background: var(--gradient) } */
     --gradient: #19a944;
 
     --background: 147 48.1% 3.04%;
