@@ -1,5 +1,4 @@
 import { EventsPageComponent } from "@/components/pages/events";
-import { RootLayoutComponent } from "@/components/shared/root-layout";
 import { createClient } from "@/utils/supabase/server";
 
 export default async function EventsPage() {
@@ -12,8 +11,6 @@ export default async function EventsPage() {
   }
 
   return (
-    <RootLayoutComponent>
-      <EventsPageComponent events={events} />
-    </RootLayoutComponent>
+    <EventsPageComponent events={events} />
   );
 }

@@ -1,11 +1,11 @@
 "use client";
 
+import { RootLayoutComponent } from "@/components/shared/root-layout";
 import { VideoRecorder } from "@/components/video-recorder";
 import { VideoSlider } from "@/components/video-slider";
 import { VideoStreamer } from "@/components/video-streamer";
 import { createClient } from "@/utils/supabase/client";
 import type { SupaTypes } from "@services/supabase";
-import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
 import { useAsync } from "react-use";
 
@@ -199,7 +199,7 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
   }
 
   return (
-    <SessionContextProvider supabaseClient={supabase}>
+    <RootLayoutComponent>
       <section className="video-wrapper">
         {isRecording ? (
           <VideoRecorder
@@ -219,6 +219,6 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
           />
         )}
       </section>
-    </SessionContextProvider>
+    </RootLayoutComponent>
   );
 }
