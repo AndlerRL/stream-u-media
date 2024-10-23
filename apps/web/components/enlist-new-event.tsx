@@ -108,7 +108,7 @@ export function EnlistNewEvent({
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="Available Events">
-            {events.map((event) => {
+            {events?.map((event) => {
               const isUserEnlisted = enlistedEvents?.data?.some(
                 (e) => e.event_id === event.id,
               );

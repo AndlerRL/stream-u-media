@@ -14,8 +14,8 @@
   "packageManager": "bun@1.1.20",
   "workspaces": {
     "packages": [
-    "apps/*",
-    "services/*"
+      "apps/*",
+      "services/*"
     ],
     "nohoist": [
       "**/cbw-sdk",
@@ -25,5 +25,11 @@
       "**/wagmi/**",
       "**/pino-pretty/**"
     ]
+  },
+  "dependencies": {
+    "fb": "^2.0.0",
+    "instagram-graph-api": "^7.0.0",
+    "react-insta-stories": "^2.7.0",
+    "simple-icons": "^13.14.1"
   }
 }
