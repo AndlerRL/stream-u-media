@@ -173,7 +173,7 @@ function EventsComponent({ events }: { events: Tables<"events">[] }) {
               <Card>
                 <CardHeader className="relative p-0 min-h-[320px]">
                   <Image
-                    src={event?.thumbnail}
+                    src={event.thumbnail as string}
                     alt={event.name}
                     height={320}
                     width={640}
