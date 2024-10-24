@@ -1,10 +1,7 @@
 import { OTPForm } from "@/components/pages/sign-in/otp/otp-form";
+import type { AuthPageProps } from "@/types/auth";
 
-export default function Login({ searchParams: { token, token_hash, email } }: { searchParams: { otp: string, token: string, token_hash: string, email: string } }) {
-  if (token_hash) {
-    console.info("Token hash: ", token_hash);
-  }
-
+export default function Login({ searchParams: { token } }: AuthPageProps) {
   return (
     <main className="layout_container">
       <section className="flex flex-col w-full mx-auto px-4 py-20 items-center justify-center">

@@ -1,9 +1,5 @@
+import type { Message } from "@/types/auth";
 import { CheckCircle2Icon, InfoIcon, XCircleIcon } from "lucide-react";
-
-export type Message =
-  | { success: string }
-  | { error: string }
-  | { message: string };
 
 export function FormMessage({ message }: { message: Message }) {
   return (

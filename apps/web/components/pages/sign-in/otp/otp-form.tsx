@@ -10,7 +10,7 @@ import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-export function OTPForm({ token }: { token: string }) {
+export function OTPForm({ token }: { token?: string }) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [otp, setOtp] = useState(token);
   const searchParams = useSearchParams()
