@@ -5,7 +5,8 @@ import { XitterIcon } from "@/components/icons/xitter-icon";
 import { RootLayoutComponent } from "@/components/shared/root-layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
 import type { SupaTypes } from "@services/supabase";
@@ -13,17 +14,19 @@ import type { Tables } from "@services/supabase/src/database.types";
 import { useSession } from "@supabase/auth-helpers-react";
 import omit from "lodash.omit";
 import { FacebookIcon, InstagramIcon } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
+import { useMemo } from "react";
 import { useAsync } from "react-use";
 
 export function EventsPageComponent({
   events,
 }: { events: Tables<"events">[] }) {
-  return (
+  return useMemo(() => (
     <RootLayoutComponent>
       <EventsComponent events={events} />
     </RootLayoutComponent>
-  );
+  ), [events]);
 }
 
 function EventsComponent({ events }: { events: Tables<"events">[] }) {
@@ -72,9 +75,8 @@ function EventsComponent({ events }: { events: Tables<"events">[] }) {
   };
 
   return (
-    <div className="flex-1 w-full flex flex-col gap-12 px-4">
+    <ScrollArea className="flex-1 w-full flex flex-col gap-12 px-4">
       <div className="flex flex-col gap-2 items-start">
-        <h2 className="font-bold text-2xl mb-4">Your profile data</h2>
         <Card className="flex flex-col items-start justify-center relative w-full pr-44">
           <CardHeader>
             <CardTitle>Your Data</CardTitle>
@@ -158,7 +160,7 @@ function EventsComponent({ events }: { events: Tables<"events">[] }) {
         </Card>
       </div>
 
-      <h2 className="font-bold text-2xl">Enlisted Events</h2>
+      <h2 className="font-bold text-3xl mt-16 mb-8">Enlisted Events</h2>
       <ul className="w-full flex flex-col gap-10 items-center h-full">
         {events?.map((event) => {
           const isEventReady = new Date(event.start_at).getDate() < Date.now();
@@ -167,20 +169,36 @@ function EventsComponent({ events }: { events: Tables<"events">[] }) {
           const isEventComing = new Date(event.start_at).getDate() > Date.now();
 
           return (
-            <li
-              key={event.id}
-              className="p-4 bg-accent text-foreground rounded-md"
-            >
-              <h3 className="text-lg font-bold">{event.name}</h3>
-              <p>{event.description}</p>
-
-              <Button asChild className="w-auto mt-4">
-                <Link href={`/events/${event.slug}`}>
-                  {isEventReady && "Go to Event"}
-                  {isEventOver && "Watch Replay"}
-                  {isEventComing && "Coming Soon"}
-                </Link>
-              </Button>
+            <li key={event.id}>
+              <Card>
+                <CardHeader className="relative p-0 min-h-[320px]">
+                  <Image
+                    src={event?.thumbnail}
+                    alt={event.name}
+                    height={320}
+                    width={640}
+                    style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}
+                    className="relative z-0 w-full object-cover rounded-lg"
+                  />
+                </CardHeader>
+                <CardContent className="flex flex-col gap-5 mt-6">
+                  <CardTitle>
+                    {event.name}
+                  </CardTitle>
+                  <CardDescription>
+                    {event.description}
+                  </CardDescription>
+                </CardContent>
+                <CardFooter>
+                  <Button asChild className="w-auto mt-4">
+                    <Link href={`/events/${event.slug}`}>
+                      {isEventReady && "Go to Event"}
+                      {isEventOver && "Watch Replay"}
+                      {isEventComing && "Coming Soon"}
+                    </Link>
+                  </Button>
+                </CardFooter>
+              </Card>
             </li>
           );
         })}
@@ -188,6 +206,6 @@ function EventsComponent({ events }: { events: Tables<"events">[] }) {
           <EnlistNewEvent events={allEvents as SupaTypes.Tables<"events">[]} />
         </li>
       </ul>
-    </div>
+    </ScrollArea>
   );
 }

@@ -7,7 +7,6 @@ import { redirect } from "next/navigation";
 
 export async function GET(request: NextRequest) {
   const { searchParams: reqSearchParams } = new URL(request.url);
-  const headers = request.headers;
   const token = reqSearchParams.get("token") ?? "";
   const email = reqSearchParams.get("email") ?? "";
   const type = reqSearchParams.get("type") as EmailOtpType | null;

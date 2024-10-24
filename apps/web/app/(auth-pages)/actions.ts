@@ -4,12 +4,16 @@ import { createClient } from "@/utils/supabase/server";
 import { encodedRedirect } from "@/utils/utils";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import type { FormEvent } from "react";
 
-export const signInAction = async (formData: FormData) => {
+// export const signInAction = async (formData: FormData) => {
+export const signInAction = async (event: FormEvent<HTMLFormElement>) => {
+  const formData = new FormData(event.currentTarget);
   const reqHeaders = await headers();
-  const email = formData.get("email") as string;
   const searchParams = formData.get("searchParams");
   const searchParamsObj = JSON.parse(searchParams as string);
+  console.log("formData.entries()", formData.entries());
+  const email = formData.get("email") || searchParamsObj.email;
   const supabase = await createClient();
   const origin = reqHeaders.get("origin") as string;
   const emailRedirectTo = `${origin}/${searchParamsObj.redirect_to || "events"}`;

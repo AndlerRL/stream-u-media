@@ -26,7 +26,7 @@ export function LoginComponent({
 			</Button>
 			<h1 className="text-3xl font-bold">Sign in</h1>
 			<p className="text-lg text-center font-medium">Sign in with an OTP</p>
-			<form className="flex flex-col w-full max-w-xs gap-2 [&>input]:mb-3 mt-8">
+			<form className="flex flex-col w-full max-w-xs gap-2 [&>input]:mb-3 mt-8" onSubmit={signInAction}>
 				<input
 					type="hidden"
 					name="searchParams"
@@ -50,7 +50,7 @@ export function LoginComponent({
           placeholder="Your password"
           required
         /> */}
-				<SubmitButton pendingText="Signing In..." formAction={signInAction}>
+				<SubmitButton pendingText="Signing In...">
 					Sign in
 				</SubmitButton>
 				<FormMessage message={searchParams} />

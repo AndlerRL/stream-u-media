@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import {
   InputOTP,
@@ -6,16 +6,18 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
+import type { AuthSearchParams } from "@/types/auth";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-export function OTPForm({ token }: { token?: string }) {
+export function OTPForm({ query }: { query?: AuthSearchParams }) {
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const [otp, setOtp] = useState(token);
-  const searchParams = useSearchParams()
+  const [otp, setOtp] = useState(query?.token);
+  const searchParams = useSearchParams();
 
-  console.log('searchParams', searchParams)
+  console.log("searchParams", searchParams.get('email'));
+  console.log('query', query)
 
   const updateOTP = (value: string) => {
     setOtp(value);
@@ -24,7 +26,7 @@ export function OTPForm({ token }: { token?: string }) {
       console.info("OTP is complete. Calling API...");
       buttonRef.current?.click();
     }
-  }
+  };
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
@@ -35,15 +37,15 @@ export function OTPForm({ token }: { token?: string }) {
       buttonRef.current?.click();
 
       // reset the OTP field
-      setOtp('');
+      setOtp("");
     }
   }, [otp, buttonRef.current]);
 
   return (
     <form action="/auth/confirm">
       <input type="hidden" name="type" value="email" />
-      <input type="hidden" name="redirect_to" value={`${searchParams.get("redirect_to") || 'events'}`} />
-      <input type="hidden" name="email" value={searchParams.get('email') as string} />
+      <input type="hidden" name="email" value={query?.email || ""} />
+      <input type="hidden" name="redirect_to" value={query?.redirect_to || "events"} />
       <InputOTP
         type="text"
         maxLength={6}
@@ -66,7 +68,9 @@ export function OTPForm({ token }: { token?: string }) {
           <InputOTPSlot index={5} />
         </InputOTPGroup>
       </InputOTP>
-      <button type="submit" ref={buttonRef}>Verify OTP</button>
+      <button type="submit" ref={buttonRef}>
+        Verify OTP
+      </button>
     </form>
   );
 }
