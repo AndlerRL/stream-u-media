@@ -18,6 +18,7 @@ export type Database = {
           name: string;
           slug: string;
           start_at: string;
+          thumbnail: string | null;
           videos: number[] | null;
         };
         Insert: {
@@ -28,6 +29,7 @@ export type Database = {
           name: string;
           slug: string;
           start_at: string;
+          thumbnail?: string | null;
           videos?: number[] | null;
         };
         Update: {
@@ -38,6 +40,7 @@ export type Database = {
           name?: string;
           slug?: string;
           start_at?: string;
+          thumbnail?: string | null;
           videos?: number[] | null;
         };
         Relationships: [];
@@ -45,24 +48,24 @@ export type Database = {
       streams: {
         Row: {
           created_at: string;
-          event_id: number | null;
+          event_id: number;
           id: string;
           status: string | null;
-          user_id: string | null;
+          user_id: string;
         };
         Insert: {
           created_at?: string;
-          event_id?: number | null;
+          event_id: number;
           id?: string;
           status?: string | null;
-          user_id?: string | null;
+          user_id: string;
         };
         Update: {
           created_at?: string;
-          event_id?: number | null;
+          event_id?: number;
           id?: string;
           status?: string | null;
-          user_id?: string | null;
+          user_id?: string;
         };
         Relationships: [
           {

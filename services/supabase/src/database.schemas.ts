@@ -9,6 +9,7 @@ export const eventsRowSchema = z.object({
   name: z.string(),
   slug: z.string(),
   start_at: z.string(),
+  thumbnail: z.string().nullable(),
   videos: z.array(z.number()).nullable(),
 });
 
@@ -20,6 +21,7 @@ export const eventsInsertSchema = z.object({
   name: z.string(),
   slug: z.string(),
   start_at: z.string(),
+  thumbnail: z.string().optional().nullable(),
   videos: z.array(z.number()).optional().nullable(),
 });
 
@@ -31,6 +33,7 @@ export const eventsUpdateSchema = z.object({
   name: z.string().optional(),
   slug: z.string().optional(),
   start_at: z.string().optional(),
+  thumbnail: z.string().optional().nullable(),
   videos: z.array(z.number()).optional().nullable(),
 });
 
@@ -38,26 +41,26 @@ export const eventsRelationshipsSchema = z.tuple([]);
 
 export const streamsRowSchema = z.object({
   created_at: z.string(),
-  event_id: z.number().nullable(),
+  event_id: z.number(),
   id: z.string(),
   status: z.string().nullable(),
-  user_id: z.string().nullable(),
+  user_id: z.string(),
 });
 
 export const streamsInsertSchema = z.object({
   created_at: z.string().optional(),
-  event_id: z.number().optional().nullable(),
+  event_id: z.number(),
   id: z.string().optional(),
   status: z.string().optional().nullable(),
-  user_id: z.string().optional().nullable(),
+  user_id: z.string(),
 });
 
 export const streamsUpdateSchema = z.object({
   created_at: z.string().optional(),
-  event_id: z.number().optional().nullable(),
+  event_id: z.number().optional(),
   id: z.string().optional(),
   status: z.string().optional().nullable(),
-  user_id: z.string().optional().nullable(),
+  user_id: z.string().optional(),
 });
 
 export const streamsRelationshipsSchema = z.tuple([
