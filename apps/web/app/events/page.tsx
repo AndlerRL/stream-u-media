@@ -4,9 +4,9 @@ import { createClient } from "@/utils/supabase/server";
 import type { SupaTypes } from "@services/supabase";
 
 export default async function EventsPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const auth = await useServerSession();
-  const { data: userEvents, error: userEventsError } = await supabase.from("users_events").select("*").eq("user_id", auth.session?.id);
+  const { data: userEvents, error: userEventsError } = await supabase.from("users_events").select("*").eq("user_id", auth.session?.id as string);
 
   if (userEventsError) {
     console.error("Error fetching user events:", userEventsError);
@@ -25,7 +25,7 @@ export default async function EventsPage() {
       (payload) => {
         console.log("Change received!", payload);
         if (payload.eventType === 'INSERT' && userEvents) {
-          userEvents.push(payload.new);
+          userEvents.push(payload.new as { event_id: number; user_id: string });
           getEvents()
         }
       },

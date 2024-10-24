@@ -1,8 +1,8 @@
 import type { Message } from "@/types/auth";
 import { CheckCircle2Icon, InfoIcon, XCircleIcon } from "lucide-react";
 
-export function FormMessage({ message }: { message: Message }) {
-  return (
+export function FormMessage({ message }: { message?: Message }) {
+  return message ? (
     <div className="flex flex-col gap-2 w-full max-w-md text-sm">
       {"success" in message && (
         <div className="w-full flex gap-2 items-center leading-loose font-semibold text-foreground border-l-2 border-foreground px-4">
@@ -23,5 +23,7 @@ export function FormMessage({ message }: { message: Message }) {
         </div>
       )}
     </div>
+  ) : (
+    <></>
   );
 }

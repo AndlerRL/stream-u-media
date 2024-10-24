@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
   console.log("reqSearchParams -> ", reqSearchParams.toString());
 
   if (token && type) {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { session },

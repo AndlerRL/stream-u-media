@@ -1,191 +1,178 @@
-[?25l
-    Select a project:                                                                                    
-                                                                                                         
-  >  1. wlblwjlvmuayqayfabvz [name: stream-u-media, org: vfbensuwkgvxeymeklms, region: us-east-1]        
-    2. yhhpyexsnfepayxmupcl [name: city-mall, org: vfbensuwkgvxeymeklms, region: us-east-1]              
-    3. qpjdshrcgjwkbsbhkxni [name: morlauncher-offchain-db, org: xclrirhmxbhexikhuirq, region: us-east-1]
-                                                                                                         
-                                                                                                         
-                                                                                                         
-                                                                                                         
-                                                                                                         
-                                                                                                         
-    ↑/k up • ↓/j down • / filter • q quit • ? more                                                       
-                                                                                                         [0D[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[0D[2K [0D[2K[?25h[?1002l[?1003l[?1006lexport type Json =
+export type Json =
   | string
   | number
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[]
+  | Json[];
 
 export type Database = {
   public: {
     Tables: {
       events: {
         Row: {
-          created_at: string
-          description: string
-          ends_at: string
-          id: number
-          name: string
-          slug: string
-          start_at: string
-          videos: number[] | null
-        }
+          created_at: string;
+          description: string;
+          ends_at: string;
+          id: number;
+          name: string;
+          slug: string;
+          start_at: string;
+          videos: number[] | null;
+        };
         Insert: {
-          created_at?: string
-          description: string
-          ends_at: string
-          id?: number
-          name: string
-          slug: string
-          start_at: string
-          videos?: number[] | null
-        }
+          created_at?: string;
+          description: string;
+          ends_at: string;
+          id?: number;
+          name: string;
+          slug: string;
+          start_at: string;
+          videos?: number[] | null;
+        };
         Update: {
-          created_at?: string
-          description?: string
-          ends_at?: string
-          id?: number
-          name?: string
-          slug?: string
-          start_at?: string
-          videos?: number[] | null
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          description?: string;
+          ends_at?: string;
+          id?: number;
+          name?: string;
+          slug?: string;
+          start_at?: string;
+          videos?: number[] | null;
+        };
+        Relationships: [];
+      };
       streams: {
         Row: {
-          created_at: string
-          event_id: number | null
-          id: string
-          status: string | null
-          user_id: string | null
-        }
+          created_at: string;
+          event_id: number | null;
+          id: string;
+          status: string | null;
+          user_id: string | null;
+        };
         Insert: {
-          created_at?: string
-          event_id?: number | null
-          id?: string
-          status?: string | null
-          user_id?: string | null
-        }
+          created_at?: string;
+          event_id?: number | null;
+          id?: string;
+          status?: string | null;
+          user_id?: string | null;
+        };
         Update: {
-          created_at?: string
-          event_id?: number | null
-          id?: string
-          status?: string | null
-          user_id?: string | null
-        }
+          created_at?: string;
+          event_id?: number | null;
+          id?: string;
+          status?: string | null;
+          user_id?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "streams_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
+            foreignKeyName: "streams_event_id_fkey";
+            columns: ["event_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       tags: {
         Row: {
-          label: string
-          value: number
-        }
+          label: string;
+          value: number;
+        };
         Insert: {
-          label: string
-          value?: number
-        }
+          label: string;
+          value?: number;
+        };
         Update: {
-          label?: string
-          value?: number
-        }
-        Relationships: []
-      }
+          label?: string;
+          value?: number;
+        };
+        Relationships: [];
+      };
       users_events: {
         Row: {
-          event_id: number
-          user_id: string
-        }
+          event_id: number;
+          user_id: string;
+        };
         Insert: {
-          event_id: number
-          user_id: string
-        }
+          event_id: number;
+          user_id: string;
+        };
         Update: {
-          event_id?: number
-          user_id?: string
-        }
+          event_id?: number;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "users_events_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
+            foreignKeyName: "users_events_event_id_fkey";
+            columns: ["event_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       videos: {
         Row: {
-          created_at: string
-          description: string | null
-          event_id: number
-          id: number
-          loves: number
-          source: string
-          tags_id: number[]
-          title: string | null
-          user_id: string
-        }
+          created_at: string;
+          description: string | null;
+          event_id: number;
+          id: number;
+          loves: number;
+          source: string;
+          tags_id: number[];
+          title: string | null;
+          user_id: string;
+        };
         Insert: {
-          created_at?: string
-          description?: string | null
-          event_id: number
-          id?: number
-          loves?: number
-          source: string
-          tags_id: number[]
-          title?: string | null
-          user_id: string
-        }
+          created_at?: string;
+          description?: string | null;
+          event_id: number;
+          id?: number;
+          loves?: number;
+          source: string;
+          tags_id: number[];
+          title?: string | null;
+          user_id: string;
+        };
         Update: {
-          created_at?: string
-          description?: string | null
-          event_id?: number
-          id?: number
-          loves?: number
-          source?: string
-          tags_id?: number[]
-          title?: string | null
-          user_id?: string
-        }
+          created_at?: string;
+          description?: string | null;
+          event_id?: number;
+          id?: number;
+          loves?: number;
+          source?: string;
+          tags_id?: number[];
+          title?: string | null;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "videos_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
+            foreignKeyName: "videos_event_id_fkey";
+            columns: ["event_id"];
+            isOneToOne: false;
+            referencedRelation: "events";
+            referencedColumns: ["id"];
           },
-        ]
-      }
-    }
+        ];
+      };
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Enums: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
+      [_ in never]: never;
+    };
+  };
+};
 
-type PublicSchema = Database[Extract<keyof Database, "public">]
+type PublicSchema = Database[Extract<keyof Database, "public">];
 
 export type Tables<
   PublicTableNameOrOptions extends
@@ -198,7 +185,7 @@ export type Tables<
 > = PublicTableNameOrOptions extends { schema: keyof Database }
   ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
       Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
+      Row: infer R;
     }
     ? R
     : never
@@ -206,11 +193,11 @@ export type Tables<
         PublicSchema["Views"])
     ? (PublicSchema["Tables"] &
         PublicSchema["Views"])[PublicTableNameOrOptions] extends {
-        Row: infer R
+        Row: infer R;
       }
       ? R
       : never
-    : never
+    : never;
 
 export type TablesInsert<
   PublicTableNameOrOptions extends
@@ -221,17 +208,17 @@ export type TablesInsert<
     : never = never,
 > = PublicTableNameOrOptions extends { schema: keyof Database }
   ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
+      Insert: infer I;
     }
     ? I
     : never
   : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
     ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Insert: infer I
+        Insert: infer I;
       }
       ? I
       : never
-    : never
+    : never;
 
 export type TablesUpdate<
   PublicTableNameOrOptions extends
@@ -242,17 +229,17 @@ export type TablesUpdate<
     : never = never,
 > = PublicTableNameOrOptions extends { schema: keyof Database }
   ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
+      Update: infer U;
     }
     ? U
     : never
   : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
     ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Update: infer U
+        Update: infer U;
       }
       ? U
       : never
-    : never
+    : never;
 
 export type Enums<
   PublicEnumNameOrOptions extends
@@ -265,14 +252,14 @@ export type Enums<
   ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
     ? PublicSchema["Enums"][PublicEnumNameOrOptions]
-    : never
+    : never;
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof PublicSchema["CompositeTypes"]
     | { schema: keyof Database },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof Database;
   }
     ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
@@ -280,4 +267,4 @@ export type CompositeTypes<
   ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
     ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+    : never;

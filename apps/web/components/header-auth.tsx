@@ -6,9 +6,10 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 
 export async function AuthButton() {
+  const supabase = await createClient()
   const {
     data: { user },
-  } = await createClient().auth.getUser();
+  } = await supabase.auth.getUser();
 
   if (!hasEnvVars) {
     return (

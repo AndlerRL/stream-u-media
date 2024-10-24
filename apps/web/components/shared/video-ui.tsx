@@ -83,8 +83,8 @@ export function VideoUI({
   console.log('streamerVideoRef.current.muted', streamerVideoRef.current?.volume)
 
   const drawerOpen = Object.keys(state.drawers).find(
-    (key) => state[key as keyof typeof state],
-  );
+    (key) => state.drawers[key as keyof typeof state.drawers],
+  ) as "openProfile" | "openChat" | "openShare" | "openAi" | undefined;
 
   const toggleDrawer = (
     drawer: "openProfile" | "openChat" | "openShare" | "openAi",
@@ -317,7 +317,7 @@ export function VideoUI({
       <EventCardDrawer
         onClose={() => setState(defaultState)}
         open={Boolean(drawerOpen)}
-        drawerData={mockUpDrawerData(drawerOpen as keyof typeof state)}
+        drawerData={drawerOpen ? mockUpDrawerData(drawerOpen) : undefined}
       />
     </section>
   );

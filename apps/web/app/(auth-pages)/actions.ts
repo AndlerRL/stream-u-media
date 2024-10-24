@@ -6,11 +6,11 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 export const signInAction = async (formData: FormData) => {
-  const reqHeaders = headers();
+  const reqHeaders = await headers();
   const email = formData.get("email") as string;
   const searchParams = formData.get("searchParams");
   const searchParamsObj = JSON.parse(searchParams as string);
-  const supabase = createClient();
+  const supabase = await createClient();
   const origin = reqHeaders.get("origin") as string;
   const emailRedirectTo = `${origin}/${searchParamsObj.redirect_to || "events"}`;
 
@@ -38,7 +38,7 @@ export const signInAction = async (formData: FormData) => {
 };
 
 export const signOutAction = async () => {
-  const supabase = createClient();
+  const supabase = await createClient();
   await supabase.auth.signOut();
   return redirect("/sign-in");
 };

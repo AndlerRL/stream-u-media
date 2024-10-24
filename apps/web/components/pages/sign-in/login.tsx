@@ -1,16 +1,17 @@
 import { signInAction } from "@/app/(auth-pages)/actions";
-import { FormMessage, type Message } from "@/components/form-message";
+import { FormMessage } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { AuthSearchParams } from "@/types/auth";
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
 
 export function LoginComponent({
 	searchParams,
-}: { searchParams: Message & { redirect_to: string } }) {
-  console.log('searchParams', searchParams)
+}: { searchParams?: AuthSearchParams }): JSX.Element {
+	console.log("searchParams", searchParams);
 	return (
 		<section className="relative flex-1 flex w-full flex-col items-center justify-center min-w-64">
 			<Button
@@ -26,7 +27,12 @@ export function LoginComponent({
 			<h1 className="text-3xl font-bold">Sign in</h1>
 			<p className="text-lg text-center font-medium">Sign in with an OTP</p>
 			<form className="flex flex-col w-full max-w-xs gap-2 [&>input]:mb-3 mt-8">
-        <input type="hidden" name="searchParams" className="hidden" value={JSON.stringify(searchParams)} />
+				<input
+					type="hidden"
+					name="searchParams"
+					className="hidden"
+					value={JSON.stringify(searchParams)}
+				/>
 				<Label htmlFor="email">Email</Label>
 				<Input name="email" placeholder="you@example.com" required />
 				{/* <div className="flex justify-between items-center">
@@ -44,10 +50,7 @@ export function LoginComponent({
           placeholder="Your password"
           required
         /> */}
-				<SubmitButton
-					pendingText="Signing In..."
-					formAction={signInAction}
-				>
+				<SubmitButton pendingText="Signing In..." formAction={signInAction}>
 					Sign in
 				</SubmitButton>
 				<FormMessage message={searchParams} />
