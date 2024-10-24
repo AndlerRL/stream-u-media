@@ -8,5 +8,5 @@ export type Spread<T, U> = T & U;
 
 // Define the PageProps type
 export type PageProps<T, E extends "searchParams" | "params"> = {
-  [key in E]: Promise<T> | null;
+  [key in E]?: Promise<T>;
 };
