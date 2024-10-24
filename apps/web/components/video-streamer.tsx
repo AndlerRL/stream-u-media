@@ -137,7 +137,7 @@ export function VideoStreamer({
           console.log("Setting video source to:", mediaUrl);
           videoRef.current.src = mediaUrl;
           videoRef.current.autoplay = true;
-          videoRef.current.muted = false;
+          videoRef.current.muted = true;
           videoRef.current.playsInline = true;
         }
       });
