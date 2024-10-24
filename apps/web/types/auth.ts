@@ -1,11 +1,11 @@
 import type { Maybe } from "@/types/helpers";
 
 export interface AuthPageProps {
-  searchParams: Maybe<Message> & {
+  searchParams: {
     email?: string;
     token?: string;
     redirect_to?: string;
-  };
+  } & Maybe<Message>;
 }
 
 export type Message =
