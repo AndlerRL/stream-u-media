@@ -10,7 +10,8 @@ import { Toaster } from "sonner";
 
 export function RootLayoutComponent({
   children,
-}: { children: React.ReactNode }) {
+  className,
+}: { children: React.ReactNode, className?: string }) {
   const supabaseClient = createClient();
   const path = usePathname()
   return (
@@ -39,7 +40,7 @@ export function RootLayoutComponent({
           </div>
         </header>
       )}
-      <main className="layout_container">
+      <main className={cn('layout_container', className)}>
         {children}
       </main>
       <Toaster

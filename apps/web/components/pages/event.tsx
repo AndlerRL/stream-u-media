@@ -1,11 +1,15 @@
 "use client";
 
 import { RootLayoutComponent } from "@/components/shared/root-layout";
+import { buttonVariants } from "@/components/ui/button";
 import { VideoRecorder } from "@/components/video-recorder";
 import { VideoSlider } from "@/components/video-slider";
 import { VideoStreamer } from "@/components/video-streamer";
+import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
 import type { SupaTypes } from "@services/supabase";
+import { ArrowLeftIcon } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAsync } from "react-use";
 
@@ -128,7 +132,8 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
     setIsRecording(false);
   };
 
-  const { value: videos, error: videosError } = useAsync(async () => {
+  const { value, error: videosError } = useAsync(async () => {
+    if (!eventData?.id) return [];
     // Fetch videos associated with this event
     const { data, error } = await supabase
       .from("videos")
@@ -140,8 +145,11 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
       return [];
     }
 
+    updateVideos(data.sort((a, b) => b.created_at.localeCompare(a.created_at)));
+
     return data;
   }, [eventData?.id]);
+  const [videos, updateVideos] = useState<SupaTypes.Tables<"videos">[]>(value ?? []);
 
   console.log("💁 Data State", { eventData, videos, sessionData, params });
 
@@ -212,6 +220,7 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
         (payload) => {
           console.log("New video:", payload);
           // Update the videos state or show a notification
+          updateVideos((prev) => [...prev, payload.new as SupaTypes.Tables<"videos">].sort((a, b) => b.created_at.localeCompare(a.created_at)));
         }
       )
       .subscribe();
@@ -227,7 +236,10 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
   }
 
   return (
-    <RootLayoutComponent>
+    <RootLayoutComponent className="top-0">
+      <Link href="/events" className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), 'absolute top-5 left-5 z-50')}>
+        <ArrowLeftIcon className="size-12" />
+      </Link>
       <section className="video-wrapper">
         {isRecording ? (
           <VideoRecorder
@@ -236,7 +248,7 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
           />
         ) : (
           <VideoSlider
-            videos={defaultVideos}
+            videos={videos ?? defaultVideos}
             topContentComponent={
               <VideoStreamer
                 eventData={eventData}

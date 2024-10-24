@@ -11,7 +11,7 @@ export default async function Login({ searchParams }: AuthPageProps) {
     <Dialog open={!session?.user.id}>
       <DialogContent>
         <h1>Login from the dialog!</h1>
-        <OTPForm token={query?.token} />
+        <OTPForm query={query} />
       </DialogContent>
     </Dialog>
   );
