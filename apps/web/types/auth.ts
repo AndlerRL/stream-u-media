@@ -1,14 +1,14 @@
-import type { Maybe } from "@/types/helpers";
+import type { Maybe, PageProps } from "@/types/helpers";
 
-export interface AuthPageProps {
-  searchParams?: Promise<
+export interface AuthPageProps
+  extends PageProps<
     {
       email?: string;
       token?: string;
       redirect_to?: string;
-    } & Maybe<Message>
-  >;
-}
+    } & Maybe<Message>,
+    "searchParams"
+  > {}
 
 export type Message =
   | { success: string }
