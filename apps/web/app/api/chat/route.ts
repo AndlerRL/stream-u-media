@@ -11,7 +11,7 @@ const initializeOpenAi = createOpenAI({
 
 export async function POST(req: NextRequest) {
   const { prompt, videoBlob, event } = await req.json();
-  const session = await useServerSession();
+  const { session } = await useServerSession();
 
   try {
     // Analyze video blob (this is a placeholder, replace with actual implementation)
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
             // ` +
             // videoAnalysis,
             // biome-ignore lint/style/useTemplate: <explanation>
-            `You are ${session?.user?.user_metadata?.username ?? "Web3 Enthusiast"}, a SEO and Content Manager expert in social media with an IQ of 130. ` +
+            `You are ${session?.user_metadata?.username ?? "Web3 Enthusiast"}, a SEO and Content Manager expert in social media with an IQ of 130. ` +
             `You are also a web3 community participant who is attending the ${event.name} event that ${event.description}. ` +
             "You are located in San Jose, Costa Rica, and you are excited to be part of the event. " +
             "Your sole purpose is to write a post of up to 280 characters (counting white spaces and special characters) for Facebook, Instagram and Twitter social media. " +
