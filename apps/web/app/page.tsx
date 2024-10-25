@@ -10,7 +10,7 @@ export default function HomePage() {
     <RootLayoutComponent className="px-4 py-16 top-0" style={{ background: "var(--gradient)" }}>
       <section className="page-screen-wrapper">
         <ThemeSwitcher />
-        <Card className="w-full flex flex-col items-center">
+        <Card className="w-full max-w-[450px] flex flex-col items-center">
           <CardHeader>
 
             <CardTitle className="text-4xl font-bold text-center">

@@ -28,7 +28,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en">
       <body className="flex flex-col w-full justify-start items-center">
         <NextThemesProvider defaultTheme="system">
-          <NextTopLoader color="var(--primary)" initialPosition={0.16333} />
+          <NextTopLoader initialPosition={0.16333} />
           {children}
           <Toaster
             position="top-center"

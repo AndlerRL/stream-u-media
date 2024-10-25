@@ -25,7 +25,7 @@ export function LoginComponent({
 					Back
 				</Link>
 			</Button>
-			<Card className="w-full flex flex-col items-center justify-center">
+			<Card className="w-full max-w-[450px] flex flex-col items-center justify-center">
 				<CardHeader>
 					<CardTitle className="text-3xl font-bold text-center">Sign in</CardTitle>
 					<p className="text-lg text-center font-medium">Sign in with an OTP</p>
