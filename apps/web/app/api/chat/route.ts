@@ -1,6 +1,6 @@
+import { useServerSession } from "@/lib/hooks/use-session.server";
 import { createOpenAI } from "@ai-sdk/openai";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
-import { useSession } from "@supabase/auth-helpers-react";
 import { streamText } from "ai";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -11,7 +11,7 @@ const initializeOpenAi = createOpenAI({
 
 export async function POST(req: NextRequest) {
   const { prompt, videoBlob, event } = await req.json();
-  const session = useSession();
+  const session = await useServerSession();
 
   try {
     // Analyze video blob (this is a placeholder, replace with actual implementation)
