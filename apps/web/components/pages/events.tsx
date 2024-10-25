@@ -8,45 +8,63 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { getAllEvents, getUserEventsData } from "@/services/supabase-client.service";
 import { createClient } from "@/utils/supabase/client";
 import type { SupaTypes } from "@services/supabase";
-import type { Tables } from "@services/supabase/src/database.types";
 import { useSession } from "@supabase/auth-helpers-react";
 import omit from "lodash.omit";
-import { FacebookIcon, InstagramIcon } from "lucide-react";
+import { AtSignIcon, FacebookIcon, InstagramIcon, UserCircleIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useState } from "react";
 import { useAsync } from "react-use";
 
 export function EventsPageComponent({
   events,
-}: { events: Tables<"events">[] }) {
-  return useMemo(() => (
-    <RootLayoutComponent>
+}: { events: SupaTypes.Tables<"events">[] }) {
+  return (
+    <RootLayoutComponent className="top-14">
       <EventsComponent events={events} />
     </RootLayoutComponent>
-  ), [events]);
+  );
 }
 
-function EventsComponent({ events }: { events: Tables<"events">[] }) {
+function EventsComponent({
+  events,
+}: {
+  events: SupaTypes.Tables<"events">[]
+}) {
   const session = useSession();
+  const supabase = createClient();
   console.log("session!!", session);
   const {
     value: allEvents,
     error: allEventsError,
     loading: allEventsLoading,
-  } = useAsync(async () => {
-    const supabase = createClient();
-    const { data, error } = await supabase.from("events").select("*");
+  } = useAsync(async () => await getAllEvents(), []);
+  const [userEvents, setUserEvents] = useState<SupaTypes.Tables<"events">[]>(events);
 
-    if (error) {
-      console.error("Error fetching events:", error);
-      return [];
-    }
+  const usersEventsSubscription = supabase
+    .channel("custom-filter-channel")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "users_events",
+        filter: `user_id=eq.${session?.user.id}`,
+      },
+      async (payload) => {
+        console.log("Change received!", payload);
+        if (payload.eventType === 'INSERT' && userEvents) {
+          const newEvent = await getUserEventsData([payload.new.event_id]);
 
-    return data;
-  }, []);
+          setUserEvents([...newEvent, ...userEvents]);
+        }
+      },
+    )
+    .subscribe();
+
 
   const userData = Object.keys(
     omit(session?.user.user_metadata, [
@@ -68,18 +86,46 @@ function EventsComponent({ events }: { events: Tables<"events">[] }) {
     userData.push("twitter");
   }
 
+  const connectSocialMedia = async (provider: 'twitter' | 'facebook' | 'instagram') => {
+    switch (provider) {
+      case 'twitter':
+        console.log('Connecting Twitter...');
+        break;
+      case 'facebook':
+        console.log('Connecting Facebook...');
+        break;
+      case 'instagram':
+        console.log('Connecting Instagram...');
+        break;
+      default:
+        console.error('Invalid Social Media Provider');
+        break;
+    }
+  };
+
   const socialIcons = {
+    twitter: <XitterIcon className="size-5" />,
+    instagram: <InstagramIcon className="size-6" />,
+    facebook: <FacebookIcon className="size-6" />,
+  };
+  const userInfoIcons = {
     twitter: <XitterIcon className="size-3" />,
     instagram: <InstagramIcon className="size-4" />,
     facebook: <FacebookIcon className="size-4" />,
+    email: <AtSignIcon className="size-4" />,
+    username: <UserCircleIcon className="size-4" />,
   };
+  const availableUserData = userData.filter((key) => session?.user && key in session.user.user_metadata);
+  const unavailableUserData = userData.filter((key) => !(session?.user && key in session.user.user_metadata));
 
   return (
-    <ScrollArea className="flex-1 w-full flex flex-col gap-12 px-4">
+    <ScrollArea className="flex-1 w-full flex flex-col gap-12 px-4 pt-10">
       <div className="flex flex-col gap-2 items-start">
         <Card className="flex flex-col items-start justify-center relative w-full pr-44">
           <CardHeader>
-            <CardTitle>Your Data</CardTitle>
+            <CardTitle className="font-bold text-2xl mb-4">
+              Tu Presencia
+            </CardTitle>
             <Avatar className="size-40 absolute top-3 bg-muted bottom-0 right-4 border-2">
               <AvatarImage
                 src={session?.user.user_metadata.avatar}
@@ -92,14 +138,11 @@ function EventsComponent({ events }: { events: Tables<"events">[] }) {
           </CardHeader>
           <CardContent>
             <ul>
-              {userData
-                .filter(
-                  (key) => session?.user && key in session.user.user_metadata,
-                )
+              {availableUserData
                 .map((key) => {
                   return !key.match(/(facebook|instagram|twitter)/g) ? (
-                    <li key={key} className="flex gap-2">
-                      <span className="font-bold">{key}</span>
+                    <li key={key} className="flex items-center gap-2">
+                      <span className="font-bold">{userInfoIcons[key as keyof typeof userInfoIcons]}</span>
                       <span>{session?.user.user_metadata[key]}</span>
                     </li>
                   ) : (
@@ -111,17 +154,13 @@ function EventsComponent({ events }: { events: Tables<"events">[] }) {
                         )}
                       >
                         <span className="sr-only">{key}</span>
-                        {socialIcons[key as keyof typeof socialIcons]}
+                        {userInfoIcons[key as keyof typeof userInfoIcons]}
                       </span>
                     </li>
                   );
                 })}
               <div className="flex gap-4 my-2.5">
-                {userData
-                  .filter(
-                    (key) =>
-                      !(session?.user && key in session.user.user_metadata),
-                  )
+                {unavailableUserData
                   .map((key) => {
                     return (
                       <li key={key} className="flex gap-2">
@@ -132,53 +171,57 @@ function EventsComponent({ events }: { events: Tables<"events">[] }) {
                           )}
                         >
                           <span className="sr-only">{key}</span>
-                          {socialIcons[key as keyof typeof socialIcons]}
+                          {userInfoIcons[key as keyof typeof userInfoIcons]}
                         </span>
                       </li>
                     );
                   })}
               </div>
             </ul>
-            <div className="w-full flex flex-col gap-2 mt-12 mb-4">
-              <h3 className="font-semibold w-full text-lg">
-                {/* Connect your media for instant sharing! */}
-                Conecta tus redes para compartir al instante!
-              </h3>
-              <div className="flex items-center gap-4 justify-start w-full">
-                <Button variant="ghost" size="icon">
-                  <FacebookIcon size="24px" />
-                </Button>
-                <Button variant="ghost" size="icon">
-                  <InstagramIcon size="24px" />
-                </Button>
-                <Button variant="ghost" size="icon">
-                  <XitterIcon />
-                </Button>
+            {unavailableUserData.length && (
+              <div className="w-full flex flex-col gap-2 mt-12 mb-4">
+                <h3 className="font-semibold w-full text-lg">
+                  {/* Connect your media for instant sharing! */}
+                  Conecta tus redes para compartir al instante!
+                </h3>
+                <div className="flex items-center gap-4 justify-start w-full">
+                  {unavailableUserData.map((key) => (
+                    <Button
+                      key={key}
+                      variant="ghost"
+                      size="icon"
+                      className="flex items-center gap-2"
+                      onClick={() => connectSocialMedia(key as 'twitter' | 'facebook' | 'instagram')}
+                    >
+                      <span className="sr-only">{key}</span>
+                      {socialIcons[key as keyof typeof socialIcons]}
+                    </Button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
       <h2 className="font-bold text-3xl mt-16 mb-8">Enlisted Events</h2>
-      <ul className="w-full flex flex-col gap-10 items-center h-full">
-        {events?.map((event) => {
+      <ul className="w-full flex flex-col gap-10 items-center h-max">
+        {userEvents?.map((event) => {
           const isEventReady = new Date(event.start_at).getDate() < Date.now();
           const isEventOver =
             !isEventReady && new Date(event.ends_at).getDate() < Date.now();
           const isEventComing = new Date(event.start_at).getDate() > Date.now();
 
           return (
-            <li key={event.id}>
+            <li key={event.id} className="w-full">
               <Card>
                 <CardHeader className="relative p-0 min-h-[320px]">
                   <Image
                     src={event.thumbnail as string}
                     alt={event.name}
-                    height={320}
-                    width={640}
                     style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}
-                    className="relative z-0 w-full object-cover rounded-lg"
+                    className="relative z-0 w-full max-h-[320px] object-cover rounded-lg"
+                    fill
                   />
                 </CardHeader>
                 <CardContent className="flex flex-col gap-5 mt-6">
@@ -202,7 +245,7 @@ function EventsComponent({ events }: { events: Tables<"events">[] }) {
             </li>
           );
         })}
-        <li className="w-full flex flex-col items-center gap-4 mt-auto py-12 border-t border-foreground/30">
+        <li className="w-full flex flex-col items-center gap-4 mt-auto py-16 border-t border-foreground/30">
           <EnlistNewEvent events={allEvents as SupaTypes.Tables<"events">[]} />
         </li>
       </ul>

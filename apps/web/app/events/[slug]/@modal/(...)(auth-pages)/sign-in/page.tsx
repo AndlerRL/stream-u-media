@@ -1,4 +1,4 @@
-import { OTPForm } from "@/components/pages/sign-in/otp/otp-form";
+import { LoginComponent } from "@/components/pages/sign-in/login";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import type { AuthPageProps } from "@/types/auth";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -11,7 +11,7 @@ export default async function Login({ searchParams }: AuthPageProps) {
     <Dialog open={!session?.user.id}>
       <DialogContent>
         <h1>Login from the dialog!</h1>
-        <OTPForm query={query} />
+        <LoginComponent searchParams={query} />
       </DialogContent>
     </Dialog>
   );

@@ -10,30 +10,24 @@ export default async function ErrorPage(props: { params: Promise<any>, error: Pr
   const searchParams = await props.searchParams
   return (
     <RootLayoutComponent className="p-16 top-0" style={{ background: "var(--gradient)" }}>
-      <Card>
-        <CardHeader>
-          Error
-        </CardHeader>
-        <CardDescription>
-          Sorry, something went wrong. Please try again later.
-          <br />
-          <strong>
-            ERROR:
-          </strong>
-          {error && <pre className="text-destructive">{error.message || 'unknown'}</pre>}
+      <Card className="p-6">
+        <CardHeader className="text-3xl">404 Page Not Found</CardHeader>
+        <CardDescription className="text-xl p-6">
+          We couldn't find what you are looking for. Try to go back home
         </CardDescription>
         <CardFooter>
-          <p>ALL PROPS:</p>
-          <pre>{JSON.stringify({
-            params,
-            props,
-            searchParams,
-          }, null, 2)}</pre>
+          {error && <pre className="text-destructive">ERROR: {error.message}</pre>}
           <Link href="/" className={cn(buttonVariants({ variant: 'destructive' }))}>
             Go back home
           </Link>
         </CardFooter>
       </Card>
+      {/* <p>ALL PROPS:</p>
+      <pre>{JSON.stringify({
+        ...props,
+        params,
+        searchParams,
+      }, null, 2)}</pre> */}
     </RootLayoutComponent>
   )
 }

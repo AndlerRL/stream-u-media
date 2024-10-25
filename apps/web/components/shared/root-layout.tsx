@@ -3,20 +3,35 @@
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
-import { SessionContextProvider } from "@supabase/auth-helpers-react";
+import { SessionContextProvider, useSession } from "@supabase/auth-helpers-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Toaster } from "sonner";
 
 export function RootLayoutComponent({
   children,
   className,
-}: { children: React.ReactNode, className?: string }) {
+  style
+}: { children: React.ReactNode, className?: string, style?: React.CSSProperties }) {
   const supabaseClient = createClient();
-  const path = usePathname()
   return (
     <SessionContextProvider supabaseClient={supabaseClient}>
-      {path.match(/^\/(events|profile)$/g) && (
+      <RootLayoutContentComponent className={className} style={style}>
+        {children}
+      </RootLayoutContentComponent>
+    </SessionContextProvider>
+  )
+}
+
+function RootLayoutContentComponent({
+  children,
+  className,
+  style,
+}: { children: React.ReactNode, className?: string, style?: React.CSSProperties }) {
+  const session = useSession();
+  const path = usePathname()
+  return (
+    <>
+      {path.match(/^\/(events$|profile)/g) && (
         <header className="fixed z-50 w-full h-14 flex justify-between items-center px-4 py-2 bg-background border-b border-foreground/10">
           <Link href="/">
             <h1 className="text-xl font-bold">MintMoment</h1>
@@ -26,12 +41,12 @@ export function RootLayoutComponent({
             <nav>
               <ul className="flex gap-4">
                 <li>
-                  <Link href="/events" className={cn({ 'text-accent': path.match(/\/events/g) })}>
+                  <Link href="/events" className={cn({ 'opacity-50 hover:opacity-100': path !== '/events' })}>
                     Eventos
                   </Link>
                 </li>
                 <li>
-                  <Link href="/profile">
+                  <Link href={`/profile/${session?.user.user_metadata.username}`} className={cn({ 'opacity-50 hover:opacity-100': !path.match("/profile") })}>
                     Perfil
                   </Link>
                 </li>
@@ -40,17 +55,9 @@ export function RootLayoutComponent({
           </div>
         </header>
       )}
-      <main className={cn('layout_container', className)}>
+      <main className={cn('layout_container', className)} style={style}>
         {children}
       </main>
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          duration: 5000,
-        }}
-        richColors
-        closeButton
-      />
-    </SessionContextProvider>
+    </>
   )
 }

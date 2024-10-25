@@ -2,9 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import { useSession } from "@supabase/auth-helpers-react";
+import {
+  type IDetectedBarcode,
+  Scanner
+} from "@yudiel/react-qr-scanner";
+import { ScanQrCodeIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { type OnResultFunction, QrReader } from "react-qr-reader";
 
 export function QRScanner({
   onResult,
@@ -12,6 +16,7 @@ export function QRScanner({
   const [error, setError] = useState<string | null>(null);
   const session = useSession();
   const [scanning, setScanning] = useState(false);
+  const [scanned, setScanned] = useState(false);
   const router = useRouter();
 
   console.log("🐕‍🦺 session [QRScanner] --> ", session);
@@ -20,22 +25,28 @@ export function QRScanner({
     setScanning(true);
   };
 
-  const handleScan: OnResultFunction = (result, error) => {
-    if (error || !result || !scanning) {
-      if (error || !result) {
+  const handleScan = (detectedCodes: IDetectedBarcode[]) => {
+    const detectedCode = detectedCodes[0]
+    const { format, rawValue } = detectedCode
+    console.log('detectedCodes', detectedCodes)
+    if (error || !scanning || format !== 'qr_code') {
+      if (error || format !== 'qr_code') {
         handleError(error || new Error("No QR code found"));
       }
       return;
     }
 
-    const qrResults = result.getText();
-    setScanning(false);
-    onResult && onResult(qrResults);
+    console.log("setScanned(true);", rawValue);
+
+    onResult?.(rawValue);
     // Assume the QR code contains the event ID/slug
-    const digestedResults = qrResults.replace(/(https|http):\/\/.*\//, "");
+    const digestedResults = rawValue.replace(/(https|http):\/\/.*\//, "");
     const redirectionLink = !session?.user.id
       ? `/events/${digestedResults}`
       : `/sign-in?redirect=/events/${digestedResults}`;
+
+    setScanning(false);
+
     router.push(redirectionLink);
   };
 
@@ -44,21 +55,28 @@ export function QRScanner({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center w-[420px] h-[420px]">
+    <div className="flex flex-col items-center justify-center w-[420px] h-[420px] bg-accent rounded-3xl">
       {!scanning ? (
-        <Button variant="secondary" onClick={handleScanClick}>
-          Scan QR Code
+        <Button variant="secondary" size="lg" onClick={handleScanClick} className="text-lg font-bold">
+          SCAN<ScanQrCodeIcon className="size-7" />
         </Button>
       ) : (
-        <QrReader
+        <Scanner
           constraints={{
             facingMode: "environment",
             aspectRatio: 0.75,
             frameRate: 24,
             sampleSize: 124,
           }}
-          onResult={handleScan}
-          className="relative w-full h-full [&_video]:object-cover [&_video]:rounded-3xl after:absolute after:top-[10%] after:left-[10%] after:border-[5px] after:w-[80%] after:h-[80%] after:rounded-3xl after:border-spacing-9 after:border-dashed after:border-foreground/30 after:z-10"
+          formats={["qr_code"]}
+          paused={scanned}
+          components={{ audio: false }}
+          onScan={handleScan}
+          classNames={{
+            container: "rounded-3xl w-[420px] h-[420px] [&_svg]:rounded-3xl relative",
+            video:
+              "w-full h-full relative object-cover rounded-3xl",
+          }}
         />
       )}
       {error && <p>Error: {error}</p>}

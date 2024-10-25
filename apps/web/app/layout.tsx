@@ -1,5 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
+import NextTopLoader from "nextjs-toploader";
+import { Toaster } from "sonner";
 import "./css/globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -26,7 +28,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en">
       <body className="flex flex-col w-full justify-start items-center">
         <NextThemesProvider defaultTheme="system">
+          <NextTopLoader color="var(--primary)" initialPosition={0.16333} />
           {children}
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              duration: 5000,
+            }}
+            richColors
+            closeButton
+          />
         </NextThemesProvider>
       </body>
     </html>
