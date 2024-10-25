@@ -4,7 +4,7 @@ import { Card, CardDescription, CardFooter, CardHeader } from "@/components/ui/c
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 
-export default async function ErrorPage(props: { params: Promise<any>, error: Promise<any>, searchParams: Promise<any> }) {
+export default async function ErrorPage(props: any) {
   const params = await props.params
   const error = await props.error
   const searchParams = await props.searchParams

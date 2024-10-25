@@ -4,7 +4,7 @@ import { Card, CardDescription, CardFooter, CardHeader } from "@/components/ui/c
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 
-export default async function NotFoundPage(props: { params: Promise<any>, searchParams: Promise<any> }) {
+export default async function NotFoundPage(props: any) {
   const params = await props.params
   const searchParams = await props.searchParams
 
