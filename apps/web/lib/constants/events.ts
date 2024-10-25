@@ -2,7 +2,7 @@ export const defaultVideoConstraints = {
   muted: true,
   flash: false,
   video: {
-    facingMode: "environment",
+    facingMode: "user",
     zoom: 1,
   },
 };

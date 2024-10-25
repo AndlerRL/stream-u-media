@@ -145,7 +145,18 @@ export function VideoUI({
   useEffect(() => {
     if (navigatorRef.current) return;
     navigatorRef.current = navigator;
-  })
+
+    () => {
+      // clean up camera controls
+      if (controlsState.flash) {
+        toggleControlOption("flash");
+      }
+
+      if (controlsState.muted) {
+        toggleControlOption("sound");
+      }
+    }
+  }, [])
 
   const toggleControlOption = async (option: VideoStreamControlOption) => {
     const videoTrack = streamMediaRef?.current?.getVideoTracks()[0];
@@ -238,7 +249,7 @@ export function VideoUI({
         </div>
       )}
 
-      {streamer && streamMediaRef?.current && (
+      {streamer && (
         <CameraControls
           controls={controlsState}
           onControlHandler={toggleControlOption}

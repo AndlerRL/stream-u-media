@@ -1,5 +1,6 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
+import { useSession } from "@supabase/auth-helpers-react";
 import { streamText } from "ai";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -9,7 +10,8 @@ const initializeOpenAi = createOpenAI({
 });
 
 export async function POST(req: NextRequest) {
-  const { prompt, videoBlob } = await req.json();
+  const { prompt, videoBlob, event } = await req.json();
+  const session = useSession();
 
   try {
     // Analyze video blob (this is a placeholder, replace with actual implementation)
@@ -26,11 +28,21 @@ export async function POST(req: NextRequest) {
         {
           role: "system",
           content:
+            // "Analyze the Blob video text below and provide a response based on the given prompt up to 280 characters. " +
+            // `Focus on analyzing the video content and providing a response based on the prompt:
+            // ` +
+            // videoAnalysis,
             // biome-ignore lint/style/useTemplate: <explanation>
-            "Analyze the Blob video text below and provide a response based on the given prompt up to 280 characters. " +
-            `Focus on analyzing the video content and providing a response based on the prompt:
+            `You are ${session?.user?.user_metadata?.username ?? "Web3 Enthusiast"}, a SEO and Content Manager expert in social media with an IQ of 130. ` +
+            `You are also a web3 community participant who is attending the ${event.name} event that ${event.description}. ` +
+            "You are located in San Jose, Costa Rica, and you are excited to be part of the event. " +
+            "Your sole purpose is to write a post of up to 280 characters (counting white spaces and special characters) for Facebook, Instagram and Twitter social media. " +
+            `**Important Guidelines:**
             ` +
-            videoAnalysis,
+            "- You may or may not receive a user request; if not provided, create the post; otherwise, base your response to improve the user request. " +
+            "- If you receive a request in any language, follow the conversation in that language. " +
+            "- You may or may not receive attachments of images that can describe what the user did in the event, if you do, focus on providing a description following the indications above. " +
+            "- Make sure to add up to 3 hashtags related to the event.",
         },
         { role: "user", content: prompt },
       ],

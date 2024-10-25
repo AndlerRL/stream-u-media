@@ -34,6 +34,7 @@ export function VideoRecorder({
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [description, setDescription] = useState<string>('');
+  const [manualDescription, setManualDescription] = useState(false);
 
   const streamerVideoRef = useRef<HTMLVideoElement>(null);
   const streamMediaRef = useRef<MediaStream | null>(null);
@@ -46,6 +47,11 @@ export function VideoRecorder({
 
   const { messages, append, isLoading } = useChat({
     id: `${session?.user.user_metadata.username}_${eventData.id}`,
+    onFinish(message, options) {
+      console.log("Chat message sent successfully:", message, options);
+
+      setDescription(message.content);
+    },
   })
 
   useEffect(() => {
@@ -258,23 +264,25 @@ export function VideoRecorder({
   };
 
   const generateDescription = async () => {
-    const description = `I just finished streaming this event: ${eventData.name}!`;
+    const content = description || `I just finished streaming this event: ${eventData.name}!`;
 
     const videoBlob = previewUrl;
     // const videoBlob = (await chunksRef.current[0].text()).normalize();
 
     await append({
-      content: description,
+      content,
       role: "user",
     }, {
       body: {
-        prompt: description,
-        videoBlob
-      }
+        prompt: content,
+        videoBlob,
+        event: eventData,
+      },
     })
   }
 
   console.log(messages.filter((msg) => msg.role === "assistant") || 'No assistant message');
+  const aiResponses = messages.filter(msg => msg.role === 'assistant');
 
   return (
     <>
@@ -349,8 +357,10 @@ export function VideoRecorder({
                 placeholder="Enter a description for your video"
                 maxLength={280}
                 className={cn(inputBaseClasses, "h-24 resize-none")}
-                value={messages.filter(msg => msg.role === 'assistant')[0]?.content ?? description}
+                value={manualDescription ? description : aiResponses[aiResponses.length - 1]?.content ?? description}
                 onChange={(e) => setDescription(e.target.value)}
+                onFocus={() => setManualDescription(true)}
+                onBlur={() => setManualDescription(false)}
               />
             </form>
           </DialogDescription>

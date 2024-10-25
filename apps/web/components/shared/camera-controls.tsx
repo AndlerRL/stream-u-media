@@ -8,7 +8,7 @@ import {
   ZoomInIcon,
   ZoomOutIcon
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 export function CameraControls({
   streamMediaRef,
@@ -21,10 +21,6 @@ export function CameraControls({
   streamerVideoRef: React.RefObject<HTMLVideoElement>;
   onControlHandler: (control: VideoStreamControlOption) => void;
 }) {
-  const [flashEnabled, setFlashEnabled] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const videoTrack = streamMediaRef.current ? streamMediaRef.current.getVideoTracks()[0] : null;
-
   useEffect(() => {
     if (!streamerVideoRef.current) return;
 
