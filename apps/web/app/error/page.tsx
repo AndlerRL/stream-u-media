@@ -9,7 +9,7 @@ export default async function ErrorPage(props: { params: Promise<any>, error: Pr
   const error = await props.error
   const searchParams = await props.searchParams
   return (
-    <RootLayoutComponent className="p-16 top-0" style={{ background: "var(--gradient)" }}>
+    <RootLayoutComponent className="px-4 py-16 top-0" style={{ background: "var(--gradient)" }}>
       <Card>
         <CardHeader>
           Error

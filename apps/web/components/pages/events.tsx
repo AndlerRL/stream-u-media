@@ -245,7 +245,7 @@ function EventsComponent({
             </li>
           );
         })}
-        <li className="w-full flex flex-col items-center gap-4 mt-auto py-16 border-t border-foreground/30">
+        <li className="w-full flex flex-col items-center gap-4 mt-auto px-4 py-16 border-t border-foreground/30">
           <EnlistNewEvent events={allEvents as SupaTypes.Tables<"events">[]} />
         </li>
       </ul>

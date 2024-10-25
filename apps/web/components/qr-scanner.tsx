@@ -55,7 +55,7 @@ export function QRScanner({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center w-[420px] h-[420px] bg-accent rounded-3xl">
+    <div className="flex flex-col items-center justify-center max-w-[420px] max-h-[420px] bg-accent rounded-3xl">
       {!scanning ? (
         <Button variant="secondary" size="lg" onClick={handleScanClick} className="text-lg font-bold">
           SCAN<ScanQrCodeIcon className="size-7" />
@@ -73,7 +73,7 @@ export function QRScanner({
           components={{ audio: false }}
           onScan={handleScan}
           classNames={{
-            container: "rounded-3xl w-[420px] h-[420px] [&_svg]:rounded-3xl relative",
+            container: "rounded-3xl h-full w-full max-w-[420px] max-h-[420px] [&_svg]:rounded-3xl relative",
             video:
               "w-full h-full relative object-cover rounded-3xl",
           }}
