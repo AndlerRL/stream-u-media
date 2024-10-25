@@ -4,10 +4,13 @@ import { Card, CardDescription, CardFooter, CardHeader } from "@/components/ui/c
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 
-export default async function ErrorPage(props: { params: Promise<any>, error: Promise<any>, searchParams: Promise<{ error: Error }> }) {
+export default async function ErrorPage(props: { params: Promise<any>, error: Promise<any>, searchParams: Promise<any> }) {
   const params = await props.params
   const error = await props.error
   const searchParams = await props.searchParams
+
+  console.log('-- -- ErrorPage -- -- ', { params, searchParams, error })
+
   return (
     <RootLayoutComponent className="px-4 py-16 top-0" style={{ background: "var(--gradient)" }}>
       <Card>
