@@ -95,11 +95,19 @@ export class Streamer {
       roomId,
       streamId,
       chunk,
-    }: { roomId: string; streamId: string; chunk: ArrayBuffer }
+      username,
+    }: {
+      roomId: string;
+      streamId: string;
+      chunk: ArrayBuffer;
+      username: string;
+    }
   ) {
     console.log(
       `Broadcasting stream chunk to room ${roomId} from stream ${streamId}`
     );
-    socket.to(roomId).emit("stream-chunk", { roomId, streamId, chunk });
+    socket
+      .to(roomId)
+      .emit("stream-chunk", { roomId, streamId, chunk, username });
   }
 }

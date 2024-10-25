@@ -1,17 +1,26 @@
 "use client";
 
 import { VideoUI } from "@/components/shared/video-ui";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader } from "@/components/ui/dialog";
+import { Input, inputBaseClasses } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { defaultVideoConstraints } from "@/lib/constants/events";
+import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
+import { DialogDescription } from "@radix-ui/react-dialog";
 import type { SupaTypes } from "@services/supabase";
 import { useSession } from "@supabase/auth-helpers-react";
+import { useChat } from 'ai/react';
+import { UploadIcon, WandSparklesIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type Socket, io } from "socket.io-client";
 import { toast } from "sonner";
 
 interface VideoRecorderProps {
   eventData: SupaTypes.Tables<"events">;
-  onVideoUploaded: (videoUrl: string) => void;
+  onVideoUploaded: (videoUrl: string, videoData: { username: string; description: string }) => void;
   onCancelStream: () => void;
 }
 
@@ -24,6 +33,7 @@ export function VideoRecorder({
   const [previewUrl, setPreviewUrl] = useState<string>();
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [description, setDescription] = useState<string>('');
 
   const streamerVideoRef = useRef<HTMLVideoElement>(null);
   const streamMediaRef = useRef<MediaStream | null>(null);
@@ -33,6 +43,10 @@ export function VideoRecorder({
 
   const supabase = createClient();
   const session = useSession();
+
+  const { messages, append, isLoading } = useChat({
+    id: `${session?.user.user_metadata.username}_${eventData.id}`,
+  })
 
   useEffect(() => {
     socketRef.current = io();
@@ -76,8 +90,11 @@ export function VideoRecorder({
 
     return () => {
       if (streamMediaRef.current) {
-        stopStreamingAndRecording(true);
+        stopStreamingAndRecording();
       }
+
+      setIsUploading(false);
+      setIsStreaming(false);
     }
   }, []);
 
@@ -107,7 +124,6 @@ export function VideoRecorder({
 
       if (streamError) throw streamError;
 
-      setIsStreaming(true);
       console.log("Stream started:", streamData);
 
       // Emit start-stream event with stream ID
@@ -142,7 +158,7 @@ export function VideoRecorder({
 
       mediaRecorder.onstop = createPreview;
       mediaRecorderRef.current = mediaRecorder;
-      mediaRecorder.start(1000); // Collect data every second
+      mediaRecorder.start(140); // Collect data every second
       setPreviewUrl(undefined); // Clear any existing preview
     } catch (err) {
       console.error("Error starting stream and recording:", err);
@@ -150,14 +166,14 @@ export function VideoRecorder({
     }
   };
 
-  const stopStreamingAndRecording = useCallback(async (exit?: boolean) => {
+  const stopStreamingAndRecording = useCallback(async () => {
+    setIsUploading(true);
+
     if (!session?.user.id || !isStreaming || !eventData.id) {
       setError("No active stream available");
       return;
     }
-    if (!exit) {
-      setIsUploading(true);
-    }
+
     if (
       mediaRecorderRef.current &&
       mediaRecorderRef.current.state !== "inactive"
@@ -202,7 +218,11 @@ export function VideoRecorder({
     setPreviewUrl(url);
   };
 
-  const uploadVideo = async () => {
+  const uploadVideo = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+
     if (chunksRef.current.length === 0) {
       setError("No recorded data available");
       return;
@@ -224,7 +244,12 @@ export function VideoRecorder({
         data: { publicUrl },
       } = supabase.storage.from("videos").getPublicUrl(data.path);
 
-      onVideoUploaded(publicUrl);
+      const videoData = {
+        username: formData.get("username") as string,
+        description: formData.get("description") as string,
+      }
+
+      onVideoUploaded(publicUrl, videoData);
       chunksRef.current = []; // Clear chunks after successful upload
     } catch (err) {
       console.error("Error uploading video:", err);
@@ -232,26 +257,112 @@ export function VideoRecorder({
     }
   };
 
+  const generateDescription = async () => {
+    const description = `I just finished streaming this event: ${eventData.name}!`;
+
+    const videoBlob = previewUrl;
+    // const videoBlob = (await chunksRef.current[0].text()).normalize();
+
+    await append({
+      content: description,
+      role: "user",
+    }, {
+      body: {
+        prompt: description,
+        videoBlob
+      }
+    })
+  }
+
+  console.log(messages.filter((msg) => msg.role === "assistant") || 'No assistant message');
+
   return (
-    <VideoUI
-      error={error}
-      eventData={eventData}
-      previewUrl={previewUrl}
-      isUploading={isUploading}
-      isStreaming={isStreaming}
-      streamMediaRef={streamMediaRef}
-      mediaRecorderRef={mediaRecorderRef}
-      streamerVideoRef={streamerVideoRef}
-      onCancelStream={onCancelStream}
-      onUploadStreamedVideo={uploadVideo}
-      onStreamingStop={stopStreamingAndRecording}
-      onStreamingStart={startStreamingAndRecording}
-      onOpenChat={() => console.log("Open chat")}
-      onOpenAvatar={() => console.log("Open avatar")}
-      onLikeAction={() => console.log("Like action")}
-      onShareAction={() => console.log("Share action")}
-      onToggleAiNarrator={() => console.log("Toggle AI narrator")}
-      streamer
-    />
+    <>
+      <VideoUI
+        error={error}
+        eventData={eventData}
+        previewUrl={previewUrl}
+        isUploading={isUploading}
+        isStreaming={isStreaming}
+        streamMediaRef={streamMediaRef}
+        mediaRecorderRef={mediaRecorderRef}
+        streamerVideoRef={streamerVideoRef}
+        onCancelStream={onCancelStream}
+        onStreamingStop={stopStreamingAndRecording}
+        onStreamingStart={startStreamingAndRecording}
+        onOpenChat={() => console.log("Open chat")}
+        onOpenAvatar={() => console.log("Open avatar")}
+        onLikeAction={() => console.log("Like action")}
+        onShareAction={() => console.log("Share action")}
+        onToggleAiNarrator={() => console.log("Toggle AI narrator")}
+        streamer
+      />
+      <Dialog open={isUploading} onOpenChange={(open) => setIsUploading(open)}>
+        <DialogContent className="p-0 bg-card">
+          <DialogHeader className="gap-0">
+            {/* biome-ignore lint/a11y/useMediaCaption: <explanation> */}
+            <video
+              className="video-preview video-preview--upload"
+              src={previewUrl}
+              controls
+              autoPlay
+              loop
+            />
+            <div className="w-full bg-background flex gap-2 !my-0 py-1.5 px-6 items-center justify-start">
+              <Avatar className="size-8 border-2 bg-accent m-0">
+                <AvatarImage
+                  src={session?.user.user_metadata.avatar}
+                  alt={`@${session?.user.user_metadata.username}`}
+                />
+                <AvatarFallback>UN</AvatarFallback>
+              </Avatar>
+              <p className="font-bold text-sm w-full">@{session?.user.user_metadata.username}</p>
+            </div>
+          </DialogHeader>
+          <DialogDescription className="px-6">
+            <form className="flex flex-col gap-5" onSubmit={uploadVideo} id="new-video-upload">
+              <Label htmlFor="username" className="sr-only">
+                Video title
+              </Label>
+              <Input
+                type="hidden"
+                id="username"
+                name="username"
+                placeholder="Enter a title for your video"
+                className="hidden"
+                value={session?.user.user_metadata.username}
+                defaultValue={session?.user.user_metadata.username}
+              />
+
+              <Label htmlFor="description" className="sr-only">
+                Video description
+              </Label>
+              <Button type="button" variant="ghost" size="sm" className="w-max hover:[&_svg]:animate-pulse" onClick={generateDescription}>
+                Generate description <WandSparklesIcon className="size-4" />
+                {isLoading && (
+                  <div className="animate-spin h-4 w-4 border-2 border-t-transparent border-white rounded-full" />
+                )}
+              </Button>
+              <textarea
+                id="description"
+                name="description"
+                placeholder="Enter a description for your video"
+                maxLength={280}
+                className={cn(inputBaseClasses, "h-24 resize-none")}
+                value={messages.filter(msg => msg.role === 'assistant')[0]?.content ?? description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </form>
+          </DialogDescription>
+          <DialogFooter className="p-6 w-full flex !justify-evenly">
+            <Button type="button" variant="destructive" size="lg" onClick={() => setIsUploading(false)}>Cancel</Button>
+            <Button type="submit" form="new-video-upload" size="lg" className="text-lg">
+              Upload
+              <UploadIcon className="size-8" />
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

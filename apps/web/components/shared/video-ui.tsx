@@ -45,6 +45,7 @@ export function VideoUI({
   streamerVideoRef,
   streamMediaRef,
   isStreaming,
+  isUploading,
   isStreamStart,
   streamer,
   onOpenAvatar,
@@ -56,7 +57,6 @@ export function VideoUI({
   onCancelStream,
   onStreamingStart,
   onStreamingStop,
-  onUploadStreamedVideo,
 }: VideoUIPropsWithStreamer) {
   const session = useSession();
   const [uiState, setState] = useSetState<{
@@ -71,12 +71,10 @@ export function VideoUI({
   const navigatorRef = useRef<Navigator>();
 
   useEffect(() => {
-    if (!streamerVideoRef.current) return;
+    if (!streamerVideoRef.current || !streamMediaRef?.current || !isStreamStart) return;
 
-    if (isStreamStart) {
-      streamerVideoRef.current.srcObject = streamMediaRef?.current || null;
-    }
-  }, [isStreamStart, streamerVideoRef.current, streamMediaRef?.current]);
+    streamerVideoRef.current.srcObject = streamMediaRef.current;
+  }, [isStreamStart, streamerVideoRef?.current, streamMediaRef?.current]);
 
   const drawerOpen = Object.keys(uiState.drawers).find(
     (key) => uiState.drawers[key as keyof typeof uiState.drawers],
@@ -204,7 +202,6 @@ export function VideoUI({
           audio: true,
         });
 
-        streamMediaRef.current = stream;
         streamerVideoRef.current.srcObject = stream;
 
         setControls({ video: { ...controlsState.video, facingMode: newFacingMode } });
@@ -216,36 +213,24 @@ export function VideoUI({
     }
   }
 
+  console.log('isStreamStart', isStreamStart)
+  console.log('streamerVideoRef?.current', streamerVideoRef?.current)
+
   return (
     <section
       className={cn("video-wrapper", { "max-h-[110%]": !isStreamStart })}
     >
       {error && <div className="error">{error}</div>}
 
-      {streamer || isStreamStart ? (
-        <>
-          <video
-            className={cn("video-preview", {
-              hidden: previewUrl && !isStreaming && streamer,
-            })}
-            ref={streamerVideoRef}
-            playsInline
-            autoPlay
-            muted={streamer || controlsState.muted}
-          />
-          {streamer && (
-            <video
-              className={cn("video-preview", {
-                hidden: !previewUrl || (isStreaming && streamer),
-              })}
-              src={previewUrl}
-              controls
-            >
-              <track kind="captions" srcLang="en" label="English captions" />
-            </video>
-          )}
-        </>
-      ) : null}
+      <video
+        className={cn("video-preview", {
+          hidden: previewUrl && !isStreaming && streamer,
+        })}
+        ref={streamerVideoRef}
+        playsInline
+        autoPlay
+        muted={streamer || controlsState.muted}
+      />
 
       {!streamer && !isStreamStart && (
         <div className="video-preview video-preview--no-video">
@@ -329,7 +314,7 @@ export function VideoUI({
         >
           <Disc3Icon
             className={cn("h-8 w-8 text-foreground", {
-              "animate-spin": isStreamStart || streamerVideoRef.current,
+              "animate-spin": isStreamStart || streamer,
             })}
           />
           <SparklesIcon className="absolute -top-1.5 right-0 h-5 w-5 text-foreground" />
@@ -384,8 +369,8 @@ export function VideoUI({
                 <span className="sr-only">Cancel stream</span>
                 <CircleXIcon className="size-8 text-destructive" />
               </Button>
-              {previewUrl && (
-                <Button onClick={onUploadStreamedVideo} size="lg" className="text-lg">
+              {!isUploading && previewUrl && (
+                <Button onClick={onStreamingStop} size="lg" className="text-lg">
                   Upload
                   <UploadIcon className="size-8" />
                 </Button>
@@ -423,7 +408,6 @@ export interface VideoUIProps {
   onCancelStream?: () => void;
   onNewRecording?: () => void;
   onStreamingStart?: () => Promise<void>;
-  onUploadStreamedVideo?: () => Promise<void>;
   onStreamingStop?: () => void;
   onOpenAvatar?: () => void;
   onLikeAction?: () => void;
@@ -439,7 +423,6 @@ export type RequiredIfStreamer<
     mediaRecorderRef?: React.RefObject<MediaRecorder>;
     onStreamingStart?: VideoUIProps["onStreamingStart"];
     onCancelStream?: VideoUIProps["onCancelStream"];
-    onUploadStreamedVideo?: VideoUIProps["onUploadStreamedVideo"];
     onStreamingStop?: VideoUIProps["onStreamingStop"];
     onOpenChat?: VideoUIProps["onOpenChat"];
     onOpenAvatar?: VideoUIProps["onOpenAvatar"];
@@ -452,7 +435,6 @@ export type RequiredIfStreamer<
     | "onStreamingStart"
     | "onCancelStream"
     | "mediaRecorderRef"
-    | "onUploadStreamedVideo"
     | "onStreamingStop"
     | "streamMediaRef"
     | "onOpenChat"

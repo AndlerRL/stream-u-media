@@ -8,6 +8,8 @@
     "ts-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^0.0.68",
+    "@ffmpeg/ffmpeg": "^0.12.10",
     "@netlify/plugin-nextjs": "^5.8.1",
     "@radix-ui/react-avatar": "^1.1.1",
     "@radix-ui/react-checkbox": "^1.1.1",
@@ -26,7 +28,9 @@
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "^2.45.4",
     "@yudiel/react-qr-scanner": "^2.0.8",
+    "ai": "^3.4.18",
     "autoprefixer": "10.4.17",
+    "base-64": "^1.0.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "1.0.0",
@@ -40,6 +44,7 @@
     "next": "latest",
     "next-themes": "^0.3.0",
     "nextjs-toploader": "^3.7.15",
+    "openai": "^4.68.4",
     "prettier": "^3.3.3",
     "react": "18.2.0",
     "react-dom": "18.2.0",

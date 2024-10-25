@@ -23,7 +23,7 @@ const defaultVideos: SupaTypes.Tables<"videos">[] = [
     event_id: 1,
     created_at: new Date().toISOString(),
     tags_id: [],
-    title: null,
+    username: 'john_doe',
     user_id: "",
   },
   {
@@ -35,7 +35,7 @@ const defaultVideos: SupaTypes.Tables<"videos">[] = [
     event_id: 1,
     created_at: new Date().toISOString(),
     tags_id: [],
-    title: null,
+    username: 'john_doe',
     user_id: "",
   },
   {
@@ -47,7 +47,7 @@ const defaultVideos: SupaTypes.Tables<"videos">[] = [
     event_id: 1,
     created_at: new Date().toISOString(),
     tags_id: [],
-    title: null,
+    username: 'john_doe',
     user_id: "",
   },
   {
@@ -59,7 +59,7 @@ const defaultVideos: SupaTypes.Tables<"videos">[] = [
     event_id: 1,
     created_at: new Date().toISOString(),
     tags_id: [],
-    title: null,
+    username: 'john_doe',
     user_id: "",
   },
   {
@@ -71,7 +71,7 @@ const defaultVideos: SupaTypes.Tables<"videos">[] = [
     event_id: 1,
     created_at: new Date().toISOString(),
     tags_id: [],
-    title: null,
+    username: 'john_doe',
     user_id: "",
   },
   {
@@ -83,7 +83,7 @@ const defaultVideos: SupaTypes.Tables<"videos">[] = [
     event_id: 1,
     created_at: new Date().toISOString(),
     tags_id: [],
-    title: null,
+    username: 'john_doe',
     user_id: "",
   },
 ];
@@ -116,11 +116,15 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
     return data[0];
   }, [params.slug]);
 
-  const handleVideoUploaded = async (videoUrl: string) => {
+  const handleVideoUploaded = async (videoUrl: string, videoData: { username: string; description: string }) => {
+    const username = videoData.username || sessionData?.session?.user.user_metadata.username;
+    const description = videoData.description
     // Save the video information to the database
     const { data, error } = await supabase.from("videos").insert({
       event_id: eventData?.id as number,
       source: videoUrl,
+      description,
+      username,
       user_id: sessionData?.session?.user.id as string,
       tags_id: [],
     });

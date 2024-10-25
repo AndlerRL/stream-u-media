@@ -8,6 +8,10 @@
   &.video-preview--no-video {
     @apply flex items-center justify-center z-0;
   }
+
+  &.video-preview--upload {
+    @apply object-contain h-[380px] w-full bg-background rounded-t-2xl;
+  }
 }
 
 .controls {

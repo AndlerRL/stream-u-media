@@ -124,8 +124,8 @@ export type Database = {
           loves: number;
           source: string;
           tags_id: number[];
-          title: string | null;
           user_id: string;
+          username: string | null;
         };
         Insert: {
           created_at?: string;
@@ -135,8 +135,8 @@ export type Database = {
           loves?: number;
           source: string;
           tags_id: number[];
-          title?: string | null;
           user_id: string;
+          username?: string | null;
         };
         Update: {
           created_at?: string;
@@ -146,8 +146,8 @@ export type Database = {
           loves?: number;
           source?: string;
           tags_id?: number[];
-          title?: string | null;
           user_id?: string;
+          username?: string | null;
         };
         Relationships: [
           {

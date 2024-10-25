@@ -73,7 +73,7 @@ export function VideoStreamer({
         console.log("Reconnecting to Socket.IO server");
         socketRef.current?.emit("connect");
       }
-    }, 100);
+    }, 200);
   };
 
   const initMediaSource = async () => {
@@ -214,18 +214,22 @@ export function VideoStreamer({
   }, [activeStreams]);
 
   const getAllUserStreamers = async () => {
-    for await (const stream of activeStreams) {
-      if (stream.id !== currentStreamId) {
-        // const userData = await getUserData(stream.user_id as string);
-        // console.log('userData', userData)
-        toast(`A user is currently streaming.`, {
-          action: {
-            label: <span>Watch</span>,
-            onClick: () => joinNewStream(stream.id),
-          },
-        });
+    const timeout = setTimeout(async () => {
+      for await (const stream of activeStreams) {
+        if (stream.id !== currentStreamId) {
+          // const userData = await getUserData(stream.user_id as string);
+          // console.log('userData', userData)
+          toast(`A user is currently streaming.`, {
+            action: {
+              label: <span>Watch</span>,
+              onClick: () => joinNewStream(stream.id),
+            },
+          });
+        }
       }
-    }
+
+      clearTimeout(timeout);
+    }, 500)
   }
 
   useEffect(() => {
@@ -267,15 +271,10 @@ export function VideoStreamer({
         const uint8Array = new Uint8Array(chunk);
         chunksQueue.current.push(uint8Array);
 
-        if (!streamerUsername) {
-          const streamer = activeStreams.find(s => s.id === streamId);
-          if (streamer) {
-            setStreamerUsername(username);
-          }
-        }
-
         if (!hasInitializedRef.current && !isInitializing) {
-          await initMediaSource();
+          socketRef.current?.emit("start-stream", { roomId: eventData.id, streamId: currentStreamId, username: streamerUsername })
+
+          await joinNewStream(streamId);
         }
 
         if (mediaSourceRef.current?.readyState === "open" &&

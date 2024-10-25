@@ -123,8 +123,8 @@ export const videosRowSchema = z.object({
   loves: z.number(),
   source: z.string(),
   tags_id: z.array(z.number()),
-  title: z.string().nullable(),
   user_id: z.string(),
+  username: z.string().nullable(),
 });
 
 export const videosInsertSchema = z.object({
@@ -135,8 +135,8 @@ export const videosInsertSchema = z.object({
   loves: z.number().optional(),
   source: z.string(),
   tags_id: z.array(z.number()),
-  title: z.string().optional().nullable(),
   user_id: z.string(),
+  username: z.string().optional().nullable(),
 });
 
 export const videosUpdateSchema = z.object({
@@ -147,8 +147,8 @@ export const videosUpdateSchema = z.object({
   loves: z.number().optional(),
   source: z.string().optional(),
   tags_id: z.array(z.number()).optional(),
-  title: z.string().optional().nullable(),
   user_id: z.string().optional(),
+  username: z.string().optional().nullable(),
 });
 
 export const videosRelationshipsSchema = z.tuple([
