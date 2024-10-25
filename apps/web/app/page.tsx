@@ -1,12 +1,14 @@
 import { AuthButton } from '@/components/header-auth';
 import { QRScanner } from '@/components/qr-scanner';
 import { RootLayoutComponent } from '@/components/shared/root-layout';
+import { ThemeSwitcher } from '@/components/theme-switcher';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function HomePage() {
   return (
     <RootLayoutComponent className="p-16 top-0" style={{ background: "var(--gradient)" }}>
       <section className="page-screen-wrapper">
+        <ThemeSwitcher />
         <Card className="w-full flex flex-col items-center">
           <CardHeader>
 
