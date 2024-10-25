@@ -47,25 +47,35 @@ export class Streamer {
 
   private startStream(
     socket: Socket,
-    { roomId, streamId }: { roomId: string; streamId: string }
+    {
+      roomId,
+      streamId,
+      username,
+    }: { roomId: string; streamId: string; username: string }
   ) {
     if (!this.streamers.has(roomId)) {
       this.streamers.set(roomId, new Set());
     }
     this.streamers.get(roomId)?.add(socket.id);
-    socket.to(roomId).emit("start-stream", { streamId });
+    socket.to(roomId).emit("start-stream", { streamId, username });
     console.log(
-      `User ${socket.id} started stream ${streamId} in room ${roomId}`
+      `User ${username} ${socket.id} started stream ${streamId} in room ${roomId}`
     );
   }
 
   private endStream(
     socket: Socket,
-    { roomId, streamId }: { roomId: string; streamId: string }
+    {
+      roomId,
+      streamId,
+      username,
+    }: { roomId: string; streamId: string; username: string }
   ) {
     this.streamers.get(roomId)?.delete(socket.id);
-    socket.to(roomId).emit("end-stream", { streamId });
-    console.log(`User ${socket.id} ended stream ${streamId} in room ${roomId}`);
+    socket.to(roomId).emit("end-stream", { streamId, username });
+    console.log(
+      `User ${username} ${socket.id} ended stream ${streamId} in room ${roomId}`
+    );
   }
 
   private disconnect(socket: Socket) {

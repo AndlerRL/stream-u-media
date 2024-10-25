@@ -23,7 +23,7 @@ export function EventsPageComponent({
   events,
 }: { events: SupaTypes.Tables<"events">[] }) {
   return (
-    <RootLayoutComponent className="top-14">
+    <RootLayoutComponent className="top-4 h-full">
       <EventsComponent events={events} />
     </RootLayoutComponent>
   );
@@ -119,8 +119,8 @@ function EventsComponent({
   const unavailableUserData = userData.filter((key) => !(session?.user && key in session.user.user_metadata));
 
   return (
-    <ScrollArea className="flex-1 w-full flex flex-col gap-12 px-4 pt-10">
-      <div className="flex flex-col gap-2 items-start">
+    <ScrollArea className="flex-1 w-full flex flex-col gap-12 px-4">
+      <div className="flex flex-col gap-2 items-start pt-10">
         <Card className="flex flex-col items-start justify-center relative w-full pr-44">
           <CardHeader>
             <CardTitle className="font-bold text-2xl mb-4">

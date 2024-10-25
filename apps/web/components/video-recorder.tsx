@@ -1,6 +1,7 @@
 "use client";
 
 import { VideoUI } from "@/components/shared/video-ui";
+import { defaultVideoConstraints } from "@/lib/constants/events";
 import { createClient } from "@/utils/supabase/client";
 import type { SupaTypes } from "@services/supabase";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -11,15 +12,18 @@ import { toast } from "sonner";
 interface VideoRecorderProps {
   eventData: SupaTypes.Tables<"events">;
   onVideoUploaded: (videoUrl: string) => void;
+  onCancelStream: () => void;
 }
 
 export function VideoRecorder({
   eventData,
   onVideoUploaded,
+  onCancelStream,
 }: VideoRecorderProps) {
   const [isStreaming, setIsStreaming] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>();
   const [error, setError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const streamerVideoRef = useRef<HTMLVideoElement>(null);
   const streamMediaRef = useRef<MediaStream | null>(null);
@@ -52,15 +56,12 @@ export function VideoRecorder({
 
   const startMediaStream = async () => {
     console.log("Starting media stream");
+    const videoConfig = defaultVideoConstraints.video;
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
+      video: videoConfig,
       audio: true,
     });
     streamMediaRef.current = stream;
-
-    streamMediaRef.current.getAudioTracks().forEach((track) => {
-      track.enabled = true;
-    });
 
     if (streamerVideoRef.current) {
       streamerVideoRef.current.srcObject = stream;
@@ -72,6 +73,12 @@ export function VideoRecorder({
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     startMediaStream();
+
+    return () => {
+      if (streamMediaRef.current) {
+        stopStreamingAndRecording(true);
+      }
+    }
   }, []);
 
   const startStreamingAndRecording = async () => {
@@ -105,7 +112,7 @@ export function VideoRecorder({
 
       // Emit start-stream event with stream ID
       console.log("Emitting start-stream event");
-      socketRef.current?.emit("start-stream", { roomId: eventData.id, streamId: streamData.id });
+      socketRef.current?.emit("start-stream", { roomId: eventData.id, streamId: streamData.id, username: session.user.user_metadata.username });
 
       setIsStreaming(true);
 
@@ -126,6 +133,7 @@ export function VideoRecorder({
               roomId: eventData.id,
               streamId: streamData.id,
               chunk: arrayBuffer,
+              username: session.user.user_metadata.username,
             });
           };
           reader.readAsArrayBuffer(event.data);
@@ -142,10 +150,13 @@ export function VideoRecorder({
     }
   };
 
-  const stopStreamingAndRecording = useCallback(async () => {
+  const stopStreamingAndRecording = useCallback(async (exit?: boolean) => {
     if (!session?.user.id || !isStreaming || !eventData.id) {
       setError("No active stream available");
       return;
+    }
+    if (!exit) {
+      setIsUploading(true);
     }
     if (
       mediaRecorderRef.current &&
@@ -181,7 +192,7 @@ export function VideoRecorder({
     console.log(streamData, 'streamData')
 
     setIsStreaming(false);
-    socketRef.current?.emit("end-stream", { roomId: eventData.id, streamId: streamData.id });
+    socketRef.current?.emit("end-stream", { roomId: eventData.id, streamId: streamData.id, username: session.user.user_metadata.username });
   }, [eventData, isStreaming, session?.user, supabase]);
 
   const createPreview = () => {
@@ -226,9 +237,12 @@ export function VideoRecorder({
       error={error}
       eventData={eventData}
       previewUrl={previewUrl}
+      isUploading={isUploading}
       isStreaming={isStreaming}
       streamMediaRef={streamMediaRef}
+      mediaRecorderRef={mediaRecorderRef}
       streamerVideoRef={streamerVideoRef}
+      onCancelStream={onCancelStream}
       onUploadStreamedVideo={uploadVideo}
       onStreamingStop={stopStreamingAndRecording}
       onStreamingStart={startStreamingAndRecording}

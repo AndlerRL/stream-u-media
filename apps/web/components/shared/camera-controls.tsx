@@ -1,124 +1,92 @@
+import type { VideoStreamControlOption, VideoStreamControlState } from "@/components/shared/video-ui";
 import { Button } from "@/components/ui/button";
-import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { CameraIcon, ChevronDownIcon, SwitchCameraIcon, ZapIcon, ZapOffIcon, ZoomInIcon, ZoomOutIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
+import {
+  SwitchCameraIcon,
+  ZapIcon,
+  ZapOffIcon,
+  ZoomInIcon,
+  ZoomOutIcon
+} from "lucide-react";
+import { useEffect, useState } from "react";
 
-export function CameraControls({ streamMediaRef }: { streamMediaRef: React.RefObject<MediaStream | null> }) {
+export function CameraControls({
+  streamMediaRef,
+  streamerVideoRef,
+  onControlHandler,
+  controls,
+}: {
+  controls: VideoStreamControlState;
+  streamMediaRef: React.RefObject<MediaStream | null>;
+  streamerVideoRef: React.RefObject<HTMLVideoElement>;
+  onControlHandler: (control: VideoStreamControlOption) => void;
+}) {
   const [flashEnabled, setFlashEnabled] = useState(false);
-  const [openCameraSettings, setOpenCameraSettings] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
-  const navigatorRef = useRef<Navigator>();
+  const videoTrack = streamMediaRef.current ? streamMediaRef.current.getVideoTracks()[0] : null;
 
   useEffect(() => {
-    if (navigatorRef.current) return;
+    if (!streamerVideoRef.current) return;
 
-    navigatorRef.current = navigator;
-  }, []);
+    const videoEl = streamerVideoRef.current;
+    videoEl.muted = controls.muted;
 
-  const toggleFlash = () => {
-    setFlashEnabled(!flashEnabled);
-    // Implement flash control logic here
-    navigatorRef.current?.mediaDevices.getUserMedia({ video: true })
-      .then(stream => {
-        const track = stream.getVideoTracks()[0];
-        track.applyConstraints({
-          // @ts-ignore
-          advanced: [{ torch: flashEnabled }]
-        });
-      });
-  };
+    // Set up error handling
+    const handleError = (e: Event) => {
+      console.error("Video error:", e);
+    };
 
-  const zoomIn = () => {
-    setZoomLevel(prev => Math.min(prev + 0.1, 3)); // Max zoom level 3x
-    // Implement zoom-in logic here
-    navigatorRef.current?.mediaDevices.getUserMedia({ video: true })
-      .then(stream => {
-        const track = stream.getVideoTracks()[0];
-        track.applyConstraints({
-          // @ts-ignore
-          advanced: [{ zoom: zoomLevel }]
-        });
-      });
-  };
-
-  const zoomOut = () => {
-    setZoomLevel(prev => Math.max(prev - 0.1, 1)); // Min zoom level 1x
-    // Implement zoom-out logic here
-    navigatorRef.current?.mediaDevices.getUserMedia({ video: true })
-      .then(stream => {
-        const track = stream.getVideoTracks()[0];
-        track.applyConstraints({
-          // @ts-ignore
-          advanced: [{ zoom: zoomLevel }]
-        });
-      });
-  };
-
-  const flipCamera = async () => {
-    if (streamMediaRef.current) {
-      const videoTrack = streamMediaRef.current.getVideoTracks()[0];
-      const constraints = videoTrack.getConstraints();
-      constraints.facingMode = constraints.facingMode === 'user' ? 'environment' : 'user';
-      await videoTrack.applyConstraints(constraints);
-    }
-  };
+    videoEl.addEventListener("error", handleError);
+    return () => videoEl.removeEventListener("error", handleError);
+  }, [streamerVideoRef.current, controls.muted]);
 
   const cameraOptions = [
+    ...(controls.video.facingMode === 'environment' ? [{
+      label: "torch",
+      icon: !controls.flash ? (
+        <ZapOffIcon className="size-6" />
+      ) : (
+        <ZapIcon className="size-6" />
+      ),
+      fnCallback: () => onControlHandler('flash'),
+    }] : []),
     {
-      label: flashEnabled ? 'disable-flash' : 'enable-flash',
-      icon: flashEnabled ? <ZapOffIcon className="size-6" /> : <ZapIcon className="size-6" />,
-      fnCallback: toggleFlash,
-    },
-    {
-      label: 'zoom-in',
+      label: "zoom-in",
       icon: <ZoomInIcon className="size-6" />,
-      fnCallback: zoomIn,
+      fnCallback: () => onControlHandler('camera-zoom-in'),
     },
     {
-      label: 'zoom-out',
+      label: "zoom-out",
       icon: <ZoomOutIcon className="size-6" />,
-      fnCallback: zoomOut,
-    },
-    {
-      label: 'flip-camera',
-      icon: <SwitchCameraIcon className="size-6" />,
-      fnCallback: flipCamera,
+      fnCallback: () => onControlHandler('camera-zoom-out'),
     },
   ];
 
   return (
-    <div className="controls controls--camera">
-      <DropdownMenu open={openCameraSettings} onOpenChange={setOpenCameraSettings}>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm">
-            <CameraIcon />
-            <ChevronDownIcon className="h-4 w-4" />
+    <>
+      <div className="controls controls--camera">
+        {cameraOptions.map(({ label, fnCallback, icon }) => (
+          <Button
+            key={`camera-opt-${label}`}
+            variant="ghost"
+            size="icon"
+            onClick={fnCallback}
+            className={cn({ 'switch_camera_btn': label === 'camera-swipe' })}
+          >
+            <span className="sr-only">{label.replace("-", " ")}</span>
+            {icon}
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[200px]">
-          <Command>
-            <CommandList>
-              <CommandGroup className="camera-controls">
-                {cameraOptions.map(({ label, fnCallback, icon }) => (
-                  <CommandItem
-                    key={`camera-opt-${label}`}
-                    value={label}
-                    onSelect={(value) => {
-                      fnCallback()
-                    }}
-                  >
-                    <span className="sr-only">
-                      {label.replace('-', ' ')}
-                    </span>
-                    {icon}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+        ))}
+      </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => onControlHandler('camera-swipe')}
+        className="controls switch_camera_btn"
+      >
+        <span className="sr-only">switch camera</span>
+        <SwitchCameraIcon className="size-16" />
+      </Button>
+    </>
   );
-};
+}

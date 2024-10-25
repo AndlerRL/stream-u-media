@@ -4,18 +4,24 @@ import { EventCardDrawer } from "@/components/pages/event-card-drawer";
 import { CameraControls } from "@/components/shared/camera-controls";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { defaultVideoConstraints } from "@/lib/constants/events";
 import { cn } from "@/lib/utils";
 import type { SupaTypes } from "@services/supabase";
 import { useSession } from "@supabase/auth-helpers-react";
 import {
+  CirclePlayIcon,
+  CircleStopIcon,
+  CircleXIcon,
   Disc3Icon,
   HeartIcon,
+  PodcastIcon,
   ShareIcon,
   SparklesIcon,
+  UploadIcon,
   Volume2Icon,
   VolumeOffIcon
 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useSetState } from "react-use";
 
 const defaultState = {
@@ -28,11 +34,12 @@ const defaultState = {
   enableSound: false,
 };
 
-const DEFAULT_AVATAR =
-  "https://api.dicebear.com/9.x/adventurer/svg?seed=12346789";
+const defaultAvatar = (seed = 'MintMoment') =>
+  `https://api.dicebear.com/9.x/adventurer/svg?seed=${seed}`;
 
 export function VideoUI({
   eventData,
+  streamerUsername,
   error,
   previewUrl,
   streamerVideoRef,
@@ -46,21 +53,22 @@ export function VideoUI({
   onShareAction,
   onToggleAiNarrator,
   onNewRecording,
+  onCancelStream,
   onStreamingStart,
   onStreamingStop,
   onUploadStreamedVideo,
 }: VideoUIPropsWithStreamer) {
   const session = useSession();
-  const [state, setState] = useSetState<{
+  const [uiState, setState] = useSetState<{
     drawers: {
       openProfile: boolean;
       openChat: boolean;
       openShare: boolean;
       openAi: boolean;
     }
-    enableSound: boolean;
   }>(defaultState);
-  const userData = session?.user.user_metadata;
+  const [controlsState, setControls] = useSetState<VideoStreamControlState>(defaultVideoConstraints);
+  const navigatorRef = useRef<Navigator>();
 
   useEffect(() => {
     if (!streamerVideoRef.current) return;
@@ -70,20 +78,8 @@ export function VideoUI({
     }
   }, [isStreamStart, streamerVideoRef.current, streamMediaRef?.current]);
 
-  useEffect(() => {
-    if (!streamerVideoRef.current || !streamMediaRef) return;
-
-    streamerVideoRef.current.muted = state.enableSound;
-    streamMediaRef.current?.getAudioTracks().forEach((track) => {
-      track.enabled = state.enableSound;
-    });
-  }, [state.enableSound])
-
-  console.log('streamerVideoRef.current.muted', streamerVideoRef.current?.muted)
-  console.log('streamerVideoRef.current.muted', streamerVideoRef.current?.volume)
-
-  const drawerOpen = Object.keys(state.drawers).find(
-    (key) => state.drawers[key as keyof typeof state.drawers],
+  const drawerOpen = Object.keys(uiState.drawers).find(
+    (key) => uiState.drawers[key as keyof typeof uiState.drawers],
   ) as "openProfile" | "openChat" | "openShare" | "openAi" | undefined;
 
   const toggleDrawer = (
@@ -92,11 +88,11 @@ export function VideoUI({
     setState((state) => ({
       drawers: {
         ...state.drawers,
-        [drawer]: !state.drawers[drawer],
+        [drawer]: !uiState.drawers[drawer],
       },
     }));
 
-    const { openAi, openProfile, openChat, openShare } = state.drawers;
+    const { openAi, openProfile, openChat, openShare } = uiState.drawers;
 
     if (drawer === "openProfile") {
       if (openProfile) {
@@ -148,8 +144,76 @@ export function VideoUI({
 
   console.log("drawerOpen", drawerOpen);
 
-  const toggleSound = () => {
-    setState({ enableSound: !state.enableSound });
+  useEffect(() => {
+    if (navigatorRef.current) return;
+    navigatorRef.current = navigator;
+  })
+
+  const toggleControlOption = async (option: VideoStreamControlOption) => {
+    const videoTrack = streamMediaRef?.current?.getVideoTracks()[0];
+
+    if (!videoTrack) return;
+
+    switch (option) {
+      case "sound":
+        setControls({ muted: !controlsState.muted });
+        break;
+      case 'flash': {
+        const newFlashState = !controlsState.flash;
+        await videoTrack.applyConstraints({
+          // @ts-ignore
+          advanced: [{ torch: newFlashState }],
+        });
+        setControls({ flash: newFlashState });
+        break;
+      }
+      case 'camera-zoom-in': {
+        const newZoomLevel = Math.min(controlsState.video.zoom + 0.3, 4); // Max zoom level 4x
+
+        await videoTrack.applyConstraints({
+          // @ts-ignore
+          advanced: [{ zoom: newZoomLevel }],
+        });
+        setControls({ video: { ...controlsState.video, zoom: newZoomLevel } });
+        break;
+      }
+      case 'camera-zoom-out': {
+        const newZoomLevel = Math.max(controlsState.video.zoom - 0.3, 0.7); // Min zoom level 1x
+
+        await videoTrack.applyConstraints({
+          // @ts-ignore
+          advanced: [{ zoom: newZoomLevel }],
+        });
+        setControls({ video: { ...controlsState.video, zoom: newZoomLevel } });
+        break;
+      }
+      case 'camera-swipe': {
+        const navigator = navigatorRef.current;
+
+        if (!navigator || !streamerVideoRef?.current || !streamMediaRef?.current) return;
+
+        const currentStream = streamerVideoRef.current.srcObject as MediaStream;
+        if (currentStream) {
+          for (const track of currentStream.getTracks()) {
+            track.stop();
+          }
+        }
+        const newFacingMode = controlsState.video.facingMode === "user" ? "environment" : "user";
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: newFacingMode },
+          audio: true,
+        });
+
+        streamMediaRef.current = stream;
+        streamerVideoRef.current.srcObject = stream;
+
+        setControls({ video: { ...controlsState.video, facingMode: newFacingMode } });
+        break;
+      }
+      default:
+        console.log("Invalid control option");
+        break;
+    }
   }
 
   return (
@@ -167,6 +231,7 @@ export function VideoUI({
             ref={streamerVideoRef}
             playsInline
             autoPlay
+            muted={streamer || controlsState.muted}
           />
           {streamer && (
             <video
@@ -189,34 +254,43 @@ export function VideoUI({
       )}
 
       {streamer && streamMediaRef?.current && (
-        <CameraControls streamMediaRef={streamMediaRef} />
+        <CameraControls
+          controls={controlsState}
+          onControlHandler={toggleControlOption}
+          streamMediaRef={streamMediaRef}
+          streamerVideoRef={streamerVideoRef}
+        />
       )}
 
-      {/* User Info */}
-      <div className="controls controls--event-details">
-        <h3 className="font-bold">@{userData?.username}</h3>
-        <p className="text-sm">
-          stream live event description might go here...
-        </p>
-      </div>
+      {/* Video Info */}
+      {streamerUsername && (
+        <div className="controls controls--streamer-details">
+          <div className="flex flex-col gap-1 text-right">
+            <p className="font-bold text-lg w-full">@{streamerUsername}</p>
+            <p className="text-sm w-full">
+              Check what is happening in {eventData.name}
+            </p>
+          </div>
+          <Avatar
+            className="size-14 border-2 bg-accent"
+            onClick={() => toggleDrawer("openProfile")}
+          >
+            <AvatarImage
+              src={defaultAvatar(streamerUsername)}
+              alt={`@${streamerUsername}`}
+            />
+            <AvatarFallback>UN</AvatarFallback>
+          </Avatar>
+        </div>
+      )}
 
       {/* Right Side CTAs */}
       <div className="controls controls--social h-1/2 md:h-1/3">
-        <Avatar
-          className="fixed size-14 border-2 top-10 bg-accent"
-          onClick={() => toggleDrawer("openProfile")}
-        >
-          <AvatarImage
-            src={userData?.avatar || DEFAULT_AVATAR}
-            alt="@username"
-          />
-          <AvatarFallback>UN</AvatarFallback>
-        </Avatar>
-
-        <Button size="icon" variant="ghost" onClick={toggleSound}>
-          {state.enableSound ? <Volume2Icon className="h-8 w-8 text-foreground" /> : <VolumeOffIcon className="h-8 w-8 text-foreground" />}
-        </Button>
-
+        {!streamer && (
+          <Button size="icon" variant="ghost" onClick={() => toggleControlOption('sound')}>
+            {!controlsState.muted ? <Volume2Icon className="h-8 w-8 text-foreground" /> : <VolumeOffIcon className="h-8 w-8 text-foreground" />}
+          </Button>
+        )}
         <Button size="icon" variant="ghost" onClick={onLikeAction}>
           <HeartIcon className="h-8 w-8 text-foreground" />
         </Button>
@@ -290,7 +364,10 @@ export function VideoUI({
 
           {/* Recording Controls */}
           <div className="controls controls--recording">
-            <Button onClick={onNewRecording}>Start New Recording</Button>
+            <Button onClick={onNewRecording} size="icon" className="px-10 size-auto font-bold text-lg">
+              <span className="sr-only">Start New Recording</span>
+              STREAM <PodcastIcon className="size-16" />
+            </Button>
           </div>
         </>
       ) : null}
@@ -299,16 +376,25 @@ export function VideoUI({
         <div className="controls controls--recording">
           {!isStreaming ? (
             <>
-              <Button onClick={onStreamingStart}>
-                Start Streaming and Recording
+              <Button onClick={onStreamingStart} variant="ghost" size="icon" className="size-auto">
+                <span className="sr-only">Start Streaming and Recording</span>
+                <CirclePlayIcon className="size-28" />
+              </Button>
+              <Button onClick={onCancelStream} variant="ghost" size="icon" className="size-auto">
+                <span className="sr-only">Cancel stream</span>
+                <CircleXIcon className="size-8 text-destructive" />
               </Button>
               {previewUrl && (
-                <Button onClick={onUploadStreamedVideo}>Upload video</Button>
+                <Button onClick={onUploadStreamedVideo} size="lg" className="text-lg">
+                  Upload
+                  <UploadIcon className="size-8" />
+                </Button>
               )}
             </>
           ) : (
-            <Button onClick={onStreamingStop}>
-              Stop Streaming and Recording
+            <Button onClick={onStreamingStop} variant="ghost" size="icon" className="size-auto">
+              <span className="sr-only">Stop Streaming and Recording</span>
+              <CircleStopIcon className="size-28 text-destructive" />
             </Button>
           )}
         </div>
@@ -332,6 +418,9 @@ export interface VideoUIProps {
   isStreaming?: boolean;
   isStreamStart?: boolean;
   streamer?: boolean;
+  isUploading?: boolean;
+  streamerUsername?: string;
+  onCancelStream?: () => void;
   onNewRecording?: () => void;
   onStreamingStart?: () => Promise<void>;
   onUploadStreamedVideo?: () => Promise<void>;
@@ -345,8 +434,11 @@ export interface VideoUIProps {
 
 export type RequiredIfStreamer<
   T extends {
+    isUploading?: boolean;
     streamMediaRef?: React.RefObject<MediaStream>;
+    mediaRecorderRef?: React.RefObject<MediaRecorder>;
     onStreamingStart?: VideoUIProps["onStreamingStart"];
+    onCancelStream?: VideoUIProps["onCancelStream"];
     onUploadStreamedVideo?: VideoUIProps["onUploadStreamedVideo"];
     onStreamingStop?: VideoUIProps["onStreamingStop"];
     onOpenChat?: VideoUIProps["onOpenChat"];
@@ -356,7 +448,10 @@ export type RequiredIfStreamer<
 > = T & { streamer: true } & Required<
   Pick<
     T,
+    | "isUploading"
     | "onStreamingStart"
+    | "onCancelStream"
+    | "mediaRecorderRef"
     | "onUploadStreamedVideo"
     | "onStreamingStop"
     | "streamMediaRef"
@@ -368,6 +463,7 @@ export type RequiredIfStreamer<
 
 export type RequiredIfNotStreamer<
   T extends {
+    streamerUsername?: string;
     onNewRecording?: VideoUIProps["onNewRecording"];
     onOpenChat?: VideoUIProps["onOpenChat"];
     onOpenAvatar?: VideoUIProps["onOpenAvatar"];
@@ -378,6 +474,7 @@ export type RequiredIfNotStreamer<
 > = T & { streamer?: false } & Required<
   Pick<
     T,
+    | "streamerUsername"
     | "onNewRecording"
     | "onOpenChat"
     | "onOpenAvatar"
@@ -390,3 +487,12 @@ export type RequiredIfNotStreamer<
 export type VideoUIPropsWithStreamer =
   | RequiredIfNotStreamer<VideoUIProps>
   | RequiredIfStreamer<VideoUIProps>;
+
+export type VideoStreamControlOption = 'sound' | 'flash' | 'camera-swipe' | 'camera-zoom-in' | 'camera-zoom-out';
+export type VideoStreamControlState = {
+  video: MediaTrackConstraintSet & {
+    zoom: number;
+  };
+  muted: boolean;
+  flash: boolean;
+}

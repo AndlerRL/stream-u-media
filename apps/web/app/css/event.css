@@ -11,21 +11,25 @@
 }
 
 .controls {
-  @apply absolute flex items-center z-10;
+  @apply absolute flex items-center z-50;
 
   &.controls--camera {
-    @apply top-4 left-4 right-4 flex justify-between;
+    @apply top-12 right-3 flex gap-4 flex-col justify-between;
   }
-  &.controls--event-details {
-    @apply text-background flex-col items-start top-0 left-0 px-4 py-10 bg-gradient-to-b from-accent-foreground/80 to-accent/10 w-full;
+  &.controls--streamer-details {
+    @apply text-background justify-end items-start gap-4 top-0 right-0 left-0 px-4 py-10 bg-gradient-to-b from-accent-foreground/50 to-accent/10 w-full;
   }
   &.controls--social__comments {
     @apply flex-col bottom-0 pb-16 pt-12 left-0 right-0 bg-opacity-50 px-4 bg-gradient-to-t from-foreground to-foreground/30 text-background;
   }
   &.controls--social {
-    @apply right-4 bottom-[24vh] flex flex-col items-center space-y-4;
+    @apply right-4 top-[33.33%] flex flex-col items-center space-y-4;
   }
   &.controls--recording {
     @apply h-max top-[66.666%] bottom-0 left-0 right-0 flex items-center flex-col gap-4 justify-center z-[1];
   }
+}
+
+.switch_camera_btn {
+  @apply top-[75%] right-[25%] flex;
 }

@@ -189,6 +189,7 @@ export function VideoStreamer({
   };
 
   const [currentStreamId, setCurrentStreamId] = useState<string | null>(null);
+  const [streamerUsername, setStreamerUsername] = useState<string>('');
 
   // Add this useEffect at the beginning to handle initial stream setup
   useEffect(() => {
@@ -236,11 +237,11 @@ export function VideoStreamer({
       await getAllUserStreamers()
     });
 
-    socketRef.current.on("start-stream", async ({ streamId, roomId }) => {
+    socketRef.current.on("start-stream", async ({ streamId, username }) => {
       console.log("Received start-stream event for stream:", streamId);
       joinNewStream(streamId); // Use joinNewStream to handle new streams
-
-      toast.info(`A User started to stream.`, {
+      setStreamerUsername(username);
+      toast.info(`${username} just started to stream!`, {
         action: {
           label: <span>Watch</span>,
           onClick: () => joinNewStream(streamId),
@@ -248,23 +249,30 @@ export function VideoStreamer({
       });
     });
 
-    socketRef.current.on("end-stream", ({ streamId }) => {
+    socketRef.current.on("end-stream", ({ streamId, username }) => {
       console.log("Received end-stream event for stream:", streamId);
       if (currentStreamId === streamId) {
         resetStream();
         setCurrentStreamId(null);
         setIsStreamStart(false);
-
-        toast.info(`A User ended to stream.`);
+        setStreamerUsername('');
+        toast.info(`${username} ended to stream.`);
       }
     });
 
-    socketRef.current.on("stream-chunk", async ({ streamId, roomId, chunk }: { streamId: string, roomId: number, chunk: ArrayBuffer }) => {
+    socketRef.current.on("stream-chunk", async ({ streamId, username, chunk }: { streamId: string, roomId: number, chunk: ArrayBuffer, username: string }) => {
       if (streamId !== currentStreamId) return;
 
       try {
         const uint8Array = new Uint8Array(chunk);
         chunksQueue.current.push(uint8Array);
+
+        if (!streamerUsername) {
+          const streamer = activeStreams.find(s => s.id === streamId);
+          if (streamer) {
+            setStreamerUsername(username);
+          }
+        }
 
         if (!hasInitializedRef.current && !isInitializing) {
           await initMediaSource();
@@ -298,6 +306,7 @@ export function VideoStreamer({
       <VideoUI
         error={error}
         eventData={eventData}
+        streamerUsername={streamerUsername}
         streamerVideoRef={videoRef}
         isStreamStart={Boolean(currentStreamId) && isStreamStart}
         onNewRecording={onNewRecording}

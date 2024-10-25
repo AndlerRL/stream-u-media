@@ -1,5 +1,5 @@
 .layout_container {
-  @apply relative top-14 h-[calc(100vh-5rem)] sm:h-screen w-full max-h-full max-w-screen-sm mx-auto flex flex-col gap-12 items-center justify-center py-10;
+  @apply relative top-14 h-[calc(100vh-3.5rem)] w-full overflow-hidden max-w-screen-sm mx-auto flex flex-col gap-12 items-center justify-center py-10;
 }
 
 .layout_header {

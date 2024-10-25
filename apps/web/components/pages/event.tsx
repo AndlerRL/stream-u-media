@@ -157,6 +157,9 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
 
   useEffect(() => {
     if (!eventData || activeStreams.length) return;
+
+    document.body.style.overflow = "hidden";
+
     // Init stream state subscription
     const fetchActiveStreams = async () => {
       const { data, error } = await supabase
@@ -175,6 +178,10 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
     };
 
     fetchActiveStreams();
+
+    return () => {
+      document.body.style.overflow = "auto";
+    }
   }, [eventData])
 
   useEffect(() => {
@@ -245,6 +252,7 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
           <VideoRecorder
             eventData={eventData}
             onVideoUploaded={handleVideoUploaded}
+            onCancelStream={() => setIsRecording(false)}
           />
         ) : (
           <VideoSlider
