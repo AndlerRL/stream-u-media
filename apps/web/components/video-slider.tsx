@@ -68,9 +68,11 @@ export function VideoSlider({
       ? currentLoves.filter((love) => love !== session?.user.user_metadata.username)
       : [...currentLoves, session?.user.user_metadata.username]
 
-    await supabase.from("videos").update({
+    await supabase.from("videos")
+    .update({
       loves: newLoves,
-    }).eq("id", eventData.id);
+    })
+    .eq("id", video.id);
   }
 
   const shareEvent = async () => {
@@ -198,7 +200,7 @@ function VideoThumbnail({
 
           supabase.from("videos").update({
             views: newViews,
-          }).eq("id", eventData.id);
+          }).eq("id", video.id);
         }, 5000)
 
         return () => clearTimeout(timeout);
@@ -218,7 +220,7 @@ function VideoThumbnail({
 
     await supabase.from("videos").update({
       loves: newLoves,
-    }).eq("id", eventData.id);
+    }).eq("id", video.id);
   }
 
   const shareEvent = async () => {
