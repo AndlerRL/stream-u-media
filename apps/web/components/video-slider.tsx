@@ -134,7 +134,7 @@ export function VideoSlider({
         onOpenChange={() => setSelectedVideo(null)}
       >
         <DialogContent className="p-0 max-w-[92.666%] max-h-[92.666%] flex items-center justify-center bg-black">
-          <DialogDescription className="relative w-full h-full flex items-center flex-1 justify-center">
+          <DialogDescription className="relative w-full h-full max-h-[85vh] flex items-center flex-1 justify-center">
             {selectedVideo && (
               // biome-ignore lint/a11y/useMediaCaption: <explanation>
               <VideoUI

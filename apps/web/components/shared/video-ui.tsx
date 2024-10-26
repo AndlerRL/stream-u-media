@@ -271,7 +271,7 @@ export function VideoUI({
         playsInline
         autoPlay
         loop={Boolean(video)}
-        muted={video ? true : streamer || controlsState.muted}
+        muted={video ? false : streamer || controlsState.muted}
       />
 
       {!streamer && !isStreamStart && (

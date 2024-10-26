@@ -34,7 +34,7 @@ export function CameraControls({
 
     videoEl.addEventListener("error", handleError);
     return () => videoEl.removeEventListener("error", handleError);
-  }, [streamerVideoRef.current, controls.muted]);
+  }, [controls.muted]);
 
   const cameraOptions = [
     ...(controls.video.facingMode === 'environment' ? [{
