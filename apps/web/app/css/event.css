@@ -1,5 +1,5 @@
 .video-wrapper {
-  @apply relative h-screen w-full max-w-screen-sm bg-secondary;
+  @apply relative h-full max-h-screen w-full max-w-screen-sm bg-secondary;
 }
 
 .video-preview {

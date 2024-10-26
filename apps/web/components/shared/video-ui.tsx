@@ -77,10 +77,10 @@ export function VideoUI({
   const session = useSession()
 
   useEffect(() => {
-    if (!streamerVideoRef.current || !streamMediaRef?.current || !isStreamStart) return;
+    if (!streamerVideoRef.current || !streamMediaRef?.current) return;
 
     streamerVideoRef.current.srcObject = streamMediaRef.current;
-  }, [isStreamStart, streamerVideoRef?.current, streamMediaRef?.current]);
+  }, [streamerVideoRef?.current, streamMediaRef?.current]);
 
   const drawerOpen = Object.keys(uiState.drawers).find(
     (key) => uiState.drawers[key as keyof typeof uiState.drawers],
@@ -263,24 +263,23 @@ export function VideoUI({
       {error && <div className="error">{error}</div>}
 
       <video
-        className={cn("video-preview", {
-          hidden: !isStreaming && streamer,
-        })}
+        className={cn("video-preview")}
         ref={streamerVideoRef}
         src={previewUrl}
         playsInline
         autoPlay
         loop={Boolean(video)}
         muted={video ? false : streamer || controlsState.muted}
+        controls={Boolean(video) || Boolean(previewUrl)}
       />
 
-      {!streamer && !isStreamStart && (
+      {!streamer && !isStreamStart && !video && (
         <div className="video-preview video-preview--no-video">
           Waiting for stream to start...
         </div>
       )}
 
-      {streamer && streamMediaRef?.current && (
+      {streamer && (
         <CameraControls
           controls={controlsState}
           onControlHandler={toggleControlOption}
