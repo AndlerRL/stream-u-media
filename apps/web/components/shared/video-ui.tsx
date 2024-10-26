@@ -283,7 +283,7 @@ export function VideoUI({
         <CameraControls
           controls={controlsState}
           onControlHandler={toggleControlOption}
-          // @ts-check
+          
           streamMediaRef={streamMediaRef}
           streamerVideoRef={streamerVideoRef}
         />
