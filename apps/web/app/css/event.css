@@ -37,3 +37,11 @@
 .switch_camera_btn {
   @apply top-[75%] right-[25%] flex;
 }
+
+.countdown {
+  @apply absolute bottom-[85%] right-[40%] p-4 text-destructive font-mono;
+}
+
+.time-display {
+  @apply text-3xl font-extrabold leading-loose tracking-wider;
+}

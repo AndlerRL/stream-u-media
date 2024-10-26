@@ -5,11 +5,6 @@ import { cn } from "@/lib/utils"
 import Link from "next/link"
 
 export default async function NotFoundPage(props: any) {
-  const params = await props.params
-  const searchParams = await props.searchParams
-
-  console.log('-- -- NotFoundPage -- -- ', { params, searchParams })
-
   return (
     <RootLayoutComponent className="px-4 py-16 top-0" style={{ background: "var(--gradient)" }}>
       <Card className="p-6">

@@ -12,6 +12,7 @@ import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAsync } from "react-use";
+import { toast } from "sonner";
 
 const defaultVideos: SupaTypes.Tables<"videos">[] = [
   {
@@ -94,8 +95,8 @@ const defaultVideos: SupaTypes.Tables<"videos">[] = [
   },
 ];
 
-export function EventPageComponent({ params }: { params: { slug: string } }) {
-  const [isRecording, setIsRecording] = useState(false);
+export function EventPageComponent({ params, search }: { params: { slug: string }, search: { reg?: string } }) {
+  const [activeStreams, setActiveStreams] = useState<SupaTypes.Tables<"streams">[]>([]);
   const supabase = createClient();
   const { value: sessionData, error: sessionError } = useAsync(async () => {
     const { data, error } = await supabase.auth.getSession();
@@ -159,11 +160,36 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
 
     return data;
   }, [eventData?.id]);
+
+  const [isRecording, setIsRecording] = useState(false);
   const [videos, updateVideos] = useState<SupaTypes.Tables<"videos">[]>(value ?? []);
 
-  console.log("💁 Data State", { eventData, videos, sessionData, params });
+  const enlistToEvent = async (eventId: number) => {
+    if (!sessionData?.session?.user?.id) return;
 
-  const [activeStreams, setActiveStreams] = useState<SupaTypes.Tables<"streams">[]>([]);
+    const { data, error } = await supabase.from("users_events").insert({
+      user_id: sessionData.session.user.id,
+      event_id: eventId,
+    });
+
+    if (error) {
+      console.error("Error enlisting to event:", error);
+      return;
+    }
+
+    toast.success("Enlisted to event successfully!");
+
+    // update search params to remove the reg query
+    const searchParams = new URLSearchParams(window.location.search);
+    searchParams.delete("reg");
+    window.history.replaceState({}, "", `${window.location.pathname}?${searchParams.toString()}`);
+  };
+
+  useEffect(() => {
+    if (!search?.reg || search?.reg !== 'true') return;
+
+    enlistToEvent(eventData?.id as number);
+  }, [search])
 
   useEffect(() => {
     if (!eventData || activeStreams.length) return;

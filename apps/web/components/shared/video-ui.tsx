@@ -2,6 +2,7 @@
 
 import { EventCardDrawer } from "@/components/pages/event-card-drawer";
 import { CameraControls } from "@/components/shared/camera-controls";
+import { Countdown } from "@/components/shared/countdown";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { defaultVideoConstraints } from "@/lib/constants/events";
@@ -10,7 +11,7 @@ import { createClient } from "@/utils/supabase/client";
 import type { SupaTypes } from "@services/supabase";
 import { useSession } from "@supabase/auth-helpers-react";
 import {
-  CirclePlayIcon,
+  CircleIcon,
   CircleStopIcon,
   CircleXIcon,
   Disc3Icon,
@@ -325,7 +326,7 @@ export function VideoUI({
             hidden: streamer,
           })}
         >
-          {viewersCount || video?.views?.length || 0}
+          {viewersCount || video?.views?.length || '0'}
         </span>
 
         {video && (
@@ -333,7 +334,7 @@ export function VideoUI({
             <Button size="icon" variant="ghost" className="size-auto p-3" onClick={onLikeAction}>
               <HeartIcon className={cn(" h-8 w-8 text-foreground", { "size-4": Boolean(video), })} />
             </Button>
-            <span className="text-xs font-extrabold drop-shadow-lg">{video?.loves?.length || 0}</span>
+            <span className="text-xs font-extrabold drop-shadow-lg">{video?.loves?.length || '0'}</span>
           </>
         )}
 
@@ -420,7 +421,7 @@ export function VideoUI({
               <>
                 <Button onClick={onStreamingStart} variant="ghost" size="icon" className="size-auto">
                   <span className="sr-only">Start Streaming and Recording</span>
-                  <CirclePlayIcon className="size-28" />
+                  <CircleIcon className="size-28 fill-destructive" />
                 </Button>
                 <Button onClick={onCancelStream} variant="ghost" size="icon" className="size-auto">
                   <span className="sr-only">Cancel stream</span>
@@ -434,10 +435,13 @@ export function VideoUI({
                 )}
               </>
             ) : (
-              <Button onClick={onStreamingStop} variant="ghost" size="icon" className="size-auto">
-                <span className="sr-only">Stop Streaming and Recording</span>
-                <CircleStopIcon className="size-28 text-destructive" />
-              </Button>
+              <>
+                <Countdown initialTime={60} onEnd={onStreamingStop as () => void} />
+                <Button onClick={onStreamingStop} variant="ghost" size="icon" className="size-auto">
+                  <span className="sr-only">Stop Streaming and Recording</span>
+                  <CircleStopIcon className="size-28 text-destructive" />
+                </Button>
+              </>
             )}
           </div>
         )
