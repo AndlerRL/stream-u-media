@@ -17,12 +17,12 @@ export function CameraControls({
   controls,
 }: {
   controls: VideoStreamControlState;
-  streamMediaRef: React.RefObject<MediaStream | null>;
-  streamerVideoRef: React.RefObject<HTMLVideoElement>;
+  streamMediaRef?: React.RefObject<MediaStream | null>;
+  streamerVideoRef?: React.RefObject<HTMLVideoElement>;
   onControlHandler: (control: VideoStreamControlOption) => void;
 }) {
   useEffect(() => {
-    if (!streamerVideoRef.current) return;
+    if (!streamerVideoRef?.current) return;
 
     const videoEl = streamerVideoRef.current;
     videoEl.muted = controls.muted;
