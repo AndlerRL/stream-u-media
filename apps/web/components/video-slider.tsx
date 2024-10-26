@@ -188,7 +188,7 @@ function VideoThumbnail({
       if (isInView) {
         videoRef.current.play();
 
-        const timeout = setTimeout(() => {
+        const timeout: any = setTimeout(() => {
           const currentViews = video.views || [];
           const isAlreadyViewed = currentViews.find((view) => view === session?.user.user_metadata.username)
 
