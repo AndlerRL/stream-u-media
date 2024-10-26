@@ -50,7 +50,7 @@ export function VideoRecorder({
   const { messages, append, isLoading } = useChat({
     id: `${session?.user.user_metadata.username}_${eventData.id}`,
     onFinish(message, options) {
-      console.log("Chat message sent successfully:", message, options);
+      // console.log("Chat message sent successfully:", message, options);
 
       setDescription(message.content);
     },
@@ -88,8 +88,8 @@ export function VideoRecorder({
     if (streamerVideoRef.current) {
       streamerVideoRef.current.srcObject = stream;
     }
-    console.log("Local video preview set");
-    console.log("Audio tracks:", stream.getAudioTracks());
+    // console.log("Local video preview set");
+    // console.log("Audio tracks:", stream.getAudioTracks());
   };
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
@@ -132,10 +132,7 @@ export function VideoRecorder({
 
       if (streamError) throw streamError;
 
-      console.log("Stream started:", streamData);
-
       // Emit start-stream event with stream ID
-      console.log("Emitting start-stream event");
       socketRef.current?.emit("start-stream", { roomId: eventData.id, streamId: streamData.id, username: session.user.user_metadata.username });
 
       setIsStreaming(true);
@@ -148,7 +145,7 @@ export function VideoRecorder({
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           chunksRef.current.push(event.data);
-          console.log("Data available:", event.data);
+          // console.log("Data available:", event.data);
           // Send chunk via Socket.IO
           const reader = new FileReader();
           reader.onloadend = () => {
@@ -194,9 +191,6 @@ export function VideoRecorder({
       }
     }
 
-    console.log('eventData', eventData)
-    console.log('session.user', session.user)
-
     // Update stream record in Supabase
     const { data: streamData, error: streamError } = await supabase
       .from("streams")
@@ -213,8 +207,6 @@ export function VideoRecorder({
       throw streamError;
     }
 
-    console.log(streamData, 'streamData')
-
     setIsStreaming(false);
     socketRef.current?.emit("end-stream", { roomId: eventData.id, streamId: streamData.id, username: session.user.user_metadata.username });
   }, [eventData, isStreaming, session?.user, supabase]);
@@ -222,7 +214,6 @@ export function VideoRecorder({
   const createPreview = () => {
     const blob = new Blob(chunksRef.current, { type: "video/webm" });
     const url = URL.createObjectURL(blob);
-    console.log("previewLink created: ", url);
     setPreviewUrl(url);
   };
 
@@ -283,7 +274,7 @@ export function VideoRecorder({
     })
   }
 
-  console.log(messages.filter((msg) => msg.role === "assistant") || 'No assistant message');
+  // console.log(messages.filter((msg) => msg.role === "assistant") || 'No assistant message');
   const aiResponses = messages.filter(msg => msg.role === 'assistant');
 
   return (

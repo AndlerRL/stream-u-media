@@ -9,15 +9,13 @@ export default async function ErrorPage(props: any) {
   const error = await props.error
   const searchParams = await props.searchParams
 
-  console.log('-- -- ErrorPage -- -- ', { params, searchParams, error })
-
   return (
     <RootLayoutComponent className="px-4 py-16 top-0" style={{ background: "var(--gradient)" }}>
       <Card>
         <CardHeader>
           Error
         </CardHeader>
-        <CardDescription>
+        <CardDescription className="flex flex-col gap-4">
           Sorry, something went wrong. Please try again later.
           <br />
           <strong>
@@ -25,7 +23,7 @@ export default async function ErrorPage(props: any) {
           </strong>
           {error && <pre className="text-destructive">{error.message || 'unknown'}</pre>}
         </CardDescription>
-        <CardFooter>
+        <CardFooter className="flex flex-col gap-4">
           <p>ALL PROPS:</p>
           <pre>{JSON.stringify({
             params,

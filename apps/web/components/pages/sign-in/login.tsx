@@ -12,7 +12,6 @@ import Link from "next/link";
 export function LoginComponent({
 	searchParams,
 }: { searchParams?: AuthSearchParams }): JSX.Element {
-	console.log("searchParams", searchParams);
 	return (
 		<section className="relative flex-1 flex w-full flex-col items-center justify-center min-w-64">
 			<Button

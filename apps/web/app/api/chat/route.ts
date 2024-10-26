@@ -18,7 +18,6 @@ export async function POST(req: NextRequest) {
     const blob = new Blob([videoBlob], { type: "video/webm" });
 
     const videoAnalysis = `data:image/png;base64,${Buffer.from(await blob.arrayBuffer()).toString("base64")}`;
-    console.log("videoAnalysis", videoAnalysis);
     const openAiModel = initializeOpenAi("gpt-4o-mini");
     // Generate response using OpenAI
     const response = await streamText({

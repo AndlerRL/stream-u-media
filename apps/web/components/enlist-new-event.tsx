@@ -91,8 +91,6 @@ export function EnlistNewEvent({
     setOpen(false);
   };
 
-  console.log('enlistedEvents', enlistedEvents)
-
   return (
     <>
       <Button onClick={() => setOpen(true)} size="lg" className="text-xl">Enlist to an Event</Button>

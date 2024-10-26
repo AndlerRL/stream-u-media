@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    console.log("Session created! 🔑 ", session);
+    console.log("Session created! 🔑 ");
 
     if (!error) {
       // redirect user to specified redirect URL or root of app

@@ -234,7 +234,7 @@ export function EventPageComponent({ params, search }: { params: { slug: string 
           filter: `event_id=eq.${eventData.id}`,
         },
         (payload) => {
-          console.log("Stream update ->", payload);
+          // console.log("Stream update ->", payload);
           if (payload.eventType === "INSERT") {
             setActiveStreams((prev) => [...prev, payload.new as SupaTypes.Tables<"streams">]);
           } else if (payload.eventType === "DELETE") {
@@ -247,7 +247,7 @@ export function EventPageComponent({ params, search }: { params: { slug: string 
           console.error("Error subscribing to stream updates:", err);
         }
 
-        console.log("Stream subscription status: ", status);
+        // console.log("Stream subscription status: ", status);
       });
 
     const videoSubscription = supabase
@@ -262,11 +262,10 @@ export function EventPageComponent({ params, search }: { params: { slug: string 
         },
         (payload) => {
           if (payload.eventType === "INSERT") {
-            console.log("New video:", payload);
+            // console.log("New video:", payload);
             // Update the videos state or show a notification
             updateVideos((prev) => [...prev, payload.new as SupaTypes.Tables<"videos">].sort((a, b) => b.created_at.localeCompare(a.created_at)));
           } else if (payload.eventType === 'UPDATE') {
-            console.log('Video updated:', payload);
             const updatedVideo = payload.new as SupaTypes.Tables<"videos">;
             updateVideos((prev) => prev.map((video) => video.id === updatedVideo.id ? updatedVideo : video));
           }

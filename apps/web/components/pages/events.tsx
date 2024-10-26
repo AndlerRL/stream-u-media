@@ -18,6 +18,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useAsync } from "react-use";
+import { toast } from "sonner";
 
 export function EventsPageComponent({
   events,
@@ -36,7 +37,7 @@ function EventsComponent({
 }) {
   const session = useSession();
   const supabase = createClient();
-  console.log("session!!", session);
+
   const {
     value: allEvents,
     error: allEventsError,
@@ -55,7 +56,7 @@ function EventsComponent({
         filter: `user_id=eq.${session?.user.id}`,
       },
       async (payload) => {
-        console.log("Change received!", payload);
+        // console.log("Change received!", payload);
         if (payload.eventType === 'INSERT' && userEvents) {
           const newEvent = await getUserEventsData([payload.new.event_id]);
 
@@ -89,16 +90,16 @@ function EventsComponent({
   const connectSocialMedia = async (provider: 'twitter' | 'facebook' | 'instagram') => {
     switch (provider) {
       case 'twitter':
-        console.log('Connecting Twitter...');
+        toast.info('Connecting Twitter Coming Soon! 🏗️');
         break;
       case 'facebook':
-        console.log('Connecting Facebook...');
+        toast.info('Connecting Facebook Coming Soon! 🏗️');
         break;
       case 'instagram':
-        console.log('Connecting Instagram...');
+        toast.info('Connecting Instagram Coming Soon! 🏗️');
         break;
       default:
-        console.error('Invalid Social Media Provider');
+        console.error('Invalid Social Media.');
         break;
     }
   };

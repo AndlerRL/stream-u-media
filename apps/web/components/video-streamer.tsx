@@ -100,7 +100,7 @@ export function VideoStreamer({
       // Create new MediaSource only if we don't have one
       if (!mediaSourceRef.current) {
         mediaSourceRef.current = new MediaSource();
-        console.log("Created new MediaSource");
+        // console.log("Created new MediaSource");
       }
 
       return new Promise<void>((resolve, reject) => {
@@ -110,7 +110,7 @@ export function VideoStreamer({
         }
 
         const handleSourceOpen = () => {
-          console.log("MediaSource opened, readyState:", mediaSourceRef.current?.readyState);
+          // console.log("MediaSource opened, readyState:", mediaSourceRef.current?.readyState);
           try {
             if (!mediaSourceRef.current) throw new Error('MediaSource not available');
 
@@ -137,7 +137,7 @@ export function VideoStreamer({
 
         if (videoRef.current) {
           const mediaUrl = URL.createObjectURL(mediaSourceRef.current);
-          console.log("Setting video source to:", mediaUrl);
+          // console.log("Setting video source to:", mediaUrl);
           videoRef.current.src = mediaUrl;
           videoRef.current.autoplay = true;
           videoRef.current.muted = false;
@@ -248,7 +248,6 @@ export function VideoStreamer({
     });
 
     socketRef.current.on("start-stream", async ({ streamId, username }) => {
-      console.log("Received start-stream event for stream:", streamId);
       joinNewStream(streamId); // Use joinNewStream to handle new streams
       setStreamerUsername(username);
       toast.info(`${username} just started to stream!`, {
@@ -260,7 +259,6 @@ export function VideoStreamer({
     });
 
     socketRef.current.on("end-stream", ({ streamId, username }) => {
-      console.log("Received end-stream event for stream:", streamId);
       if (currentStreamId === streamId) {
         resetStream();
         setCurrentStreamId(null);

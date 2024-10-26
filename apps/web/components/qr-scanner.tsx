@@ -19,8 +19,6 @@ export function QRScanner({
   const [scanned, setScanned] = useState(false);
   const router = useRouter();
 
-  console.log("🐕‍🦺 session [QRScanner] --> ", session);
-
   const handleScanClick = () => {
     setScanning(true);
   };
@@ -46,6 +44,7 @@ export function QRScanner({
       : `/sign-in?redirect=/events/${digestedResults}`;
 
     setScanning(false);
+    setScanned(true);
 
     router.push(redirectionLink);
   };

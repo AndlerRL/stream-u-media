@@ -9,7 +9,6 @@ export const signInAction = async (formData: FormData) => {
   const reqHeaders = await headers();
   const searchParams = formData.get("searchParams");
   const searchParamsObj = JSON.parse(searchParams as string);
-  console.log("formData.entries()", formData.entries());
   const email = formData.get("email") || searchParamsObj.email;
   const supabase = await createClient();
   const origin = reqHeaders.get("origin") as string;
@@ -24,7 +23,7 @@ export const signInAction = async (formData: FormData) => {
   });
 
   if (error) {
-    console.log("error msg -> ", error.message);
+    console.error("error msg -> ", error.message);
     console.trace("error trace -> ", error);
     return encodedRedirect(
       "error",
