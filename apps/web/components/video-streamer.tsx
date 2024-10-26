@@ -3,6 +3,7 @@
 import { VideoUI } from "@/components/shared/video-ui";
 import { createClient } from "@/utils/supabase/client";
 import type { SupaTypes } from "@services/supabase";
+import { useSession } from "@supabase/auth-helpers-react";
 import { useEffect, useRef, useState } from "react";
 import { type Socket, io } from "socket.io-client";
 import { toast } from "sonner";
@@ -28,6 +29,8 @@ export function VideoStreamer({
   const chunksQueue = useRef<Uint8Array[]>([]);
   const [isInitializing, setIsInitializing] = useState(false);
   const hasInitializedRef = useRef(false);
+  const session = useSession();
+  const [viewersCount, setViewersCount] = useState(0);
 
   useEffect(() => {
     if (!window.MediaSource) {
@@ -137,7 +140,7 @@ export function VideoStreamer({
           console.log("Setting video source to:", mediaUrl);
           videoRef.current.src = mediaUrl;
           videoRef.current.autoplay = true;
-          videoRef.current.muted = true;
+          videoRef.current.muted = false;
           videoRef.current.playsInline = true;
         }
       });
@@ -148,7 +151,6 @@ export function VideoStreamer({
       setIsInitializing(false);
     }
   };
-
 
   const appendNextChunk = () => {
     if (!sourceBufferRef.current || !mediaSourceRef.current) return;
@@ -166,7 +168,7 @@ export function VideoStreamer({
     try {
       const chunk = chunksQueue.current.shift();
       if (chunk) {
-        console.log("Appending chunk, queue size:", chunksQueue.current.length);
+        // console.log("Appending chunk, queue size:", chunksQueue.current.length);
         sourceBufferRef.current.appendBuffer(chunk);
 
         // Schedule next chunk append if we have more chunks
@@ -193,20 +195,20 @@ export function VideoStreamer({
 
   // Add this useEffect at the beginning to handle initial stream setup
   useEffect(() => {
-    console.log("Active streams changed:", activeStreams.map(s => s.id));
-    console.log("Current stream ID:", currentStreamId);
+    // console.log("Active streams changed:", activeStreams.map(s => s.id));
+    // console.log("Current stream ID:", currentStreamId);
 
     if (activeStreams.length > 0 && !currentStreamId) {
-      console.log("Initializing first stream:", activeStreams[0].id);
+      // console.log("Initializing first stream:", activeStreams[0].id);
       setCurrentStreamId(activeStreams[0].id);
       setIsStreamStart(true);
 
       // Add a small delay to ensure socket connection is ready
       setTimeout(async () => {
-        console.log("Initializing MediaSource for first stream");
+        // console.log("Initializing MediaSource for first stream");
         await initMediaSource();
         if (!socketRef.current?.connected) {
-          console.log("Reconnecting to Socket.IO server");
+          // console.log("Reconnecting to Socket.IO server");
           socketRef.current?.emit("connect");
         }
       }, 140);
@@ -237,8 +239,12 @@ export function VideoStreamer({
 
     socketRef.current.on("connect", async () => {
       console.log("Viewer connected to Socket.IO server");
-      socketRef.current?.emit("join-room", eventData.id);
+      socketRef.current?.emit("join-room", { roomId: eventData.id, username: session?.user.user_metadata.username });
       await getAllUserStreamers()
+    });
+
+    socketRef.current.on("viewer-joined", ({ viewers }) => {
+      setViewersCount(viewers);
     });
 
     socketRef.current.on("start-stream", async ({ streamId, username }) => {
@@ -272,9 +278,8 @@ export function VideoStreamer({
         chunksQueue.current.push(uint8Array);
 
         if (!hasInitializedRef.current && !isInitializing) {
-          socketRef.current?.emit("start-stream", { roomId: eventData.id, streamId: currentStreamId, username: streamerUsername })
-
           await joinNewStream(streamId);
+          setStreamerUsername(username);
         }
 
         if (mediaSourceRef.current?.readyState === "open" &&
@@ -300,10 +305,24 @@ export function VideoStreamer({
     }
   }, [activeStreams, currentStreamId]);
 
+  const increaseLoveCount = async () => {
+    console.log('Coming soon to love on-going streamings!')
+  }
+
+  const shareEvent = async () => {
+    await navigator.share({
+      title: eventData.name,
+      text: eventData.description,
+      url: window.location.href,
+    }).then(() => toast.success("Event shared successfully"))
+      .catch((error) => toast.error("Error sharing event: " + error));
+  }
+
   return (
     <>
       <VideoUI
         error={error}
+        viewersCount={viewersCount}
         eventData={eventData}
         streamerUsername={streamerUsername}
         streamerVideoRef={videoRef}
@@ -311,8 +330,8 @@ export function VideoStreamer({
         onNewRecording={onNewRecording}
         onOpenAvatar={() => console.log("Open Avatar")}
         onOpenChat={() => console.log("Open Chat")}
-        onShareAction={() => console.log("Share Action")}
-        onLikeAction={() => console.log("Like Action")}
+        onShareAction={shareEvent}
+        onLikeAction={increaseLoveCount}
         onToggleAiNarrator={() => console.log("Toggle AI Narrator")}
       />
     </>

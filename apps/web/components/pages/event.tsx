@@ -19,7 +19,8 @@ const defaultVideos: SupaTypes.Tables<"videos">[] = [
     source:
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
     description: "For Bigger Blazes",
-    loves: Math.floor(Math.random() * 100),
+    loves: [],
+    views: [],
     event_id: 1,
     created_at: new Date().toISOString(),
     tags_id: [],
@@ -31,7 +32,8 @@ const defaultVideos: SupaTypes.Tables<"videos">[] = [
     source:
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
     description: "For Bigger Escapes",
-    loves: Math.floor(Math.random() * 100),
+    loves: [],
+    views: [],
     event_id: 1,
     created_at: new Date().toISOString(),
     tags_id: [],
@@ -43,7 +45,8 @@ const defaultVideos: SupaTypes.Tables<"videos">[] = [
     source:
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
     description: "For Bigger Fun",
-    loves: Math.floor(Math.random() * 100),
+    loves: [],
+    views: [],
     event_id: 1,
     created_at: new Date().toISOString(),
     tags_id: [],
@@ -55,7 +58,8 @@ const defaultVideos: SupaTypes.Tables<"videos">[] = [
     source:
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
     description: "For Bigger Joyrides",
-    loves: Math.floor(Math.random() * 100),
+    loves: [],
+    views: [],
     event_id: 1,
     created_at: new Date().toISOString(),
     tags_id: [],
@@ -67,7 +71,8 @@ const defaultVideos: SupaTypes.Tables<"videos">[] = [
     source:
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
     description: "For Bigger Meltdowns",
-    loves: Math.floor(Math.random() * 100),
+    loves: [],
+    views: [],
     event_id: 1,
     created_at: new Date().toISOString(),
     tags_id: [],
@@ -79,7 +84,8 @@ const defaultVideos: SupaTypes.Tables<"videos">[] = [
     source:
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
     description: "Sintel",
-    loves: Math.floor(Math.random() * 100),
+    loves: [],
+    views: [],
     event_id: 1,
     created_at: new Date().toISOString(),
     tags_id: [],
@@ -223,15 +229,21 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*",
           schema: "public",
           table: "videos",
           filter: `event_id=eq.${eventData.id}`,
         },
         (payload) => {
-          console.log("New video:", payload);
-          // Update the videos state or show a notification
-          updateVideos((prev) => [...prev, payload.new as SupaTypes.Tables<"videos">].sort((a, b) => b.created_at.localeCompare(a.created_at)));
+          if (payload.eventType === "INSERT") {
+            console.log("New video:", payload);
+            // Update the videos state or show a notification
+            updateVideos((prev) => [...prev, payload.new as SupaTypes.Tables<"videos">].sort((a, b) => b.created_at.localeCompare(a.created_at)));
+          } else if (payload.eventType === 'UPDATE') {
+            console.log('Video updated:', payload);
+            const updatedVideo = payload.new as SupaTypes.Tables<"videos">;
+            updateVideos((prev) => prev.map((video) => video.id === updatedVideo.id ? updatedVideo : video));
+          }
         }
       )
       .subscribe();
@@ -260,6 +272,7 @@ export function EventPageComponent({ params }: { params: { slug: string } }) {
           />
         ) : (
           <VideoSlider
+            eventData={eventData}
             videos={videos ?? defaultVideos}
             topContentComponent={
               <VideoStreamer

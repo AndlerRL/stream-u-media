@@ -1,23 +1,33 @@
 "use client";
 
-import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
+import { VideoUI } from "@/components/shared/video-ui";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { createClient } from "@/utils/supabase/client";
+import { DialogDescription } from "@radix-ui/react-dialog";
 import type { SupaTypes } from "@services/supabase";
+import { useSession } from "@supabase/auth-helpers-react";
 import { GripHorizontalIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 type Videos = SupaTypes.Tables<"videos">;
 
 export function VideoSlider({
   videos,
+  eventData,
   topContentComponent,
-}: { videos: Videos[]; topContentComponent: React.ReactNode }) {
+}: { eventData: SupaTypes.Tables<'events'>; videos: Videos[]; topContentComponent: React.ReactNode }) {
+  const supabase = createClient();
+  const session = useSession();
   const [selectedVideo, setSelectedVideo] = useState<Videos | null>(null);
   const [drawerHeight, setDrawerHeight] = useState(50); // Initial height 50%
   const drawerRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
   const startYRef = useRef(0);
   const startHeightRef = useRef(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [error, setError] = useState('');
 
   const handleDragStart = (clientY: number) => {
     isDraggingRef.current = true;
@@ -50,7 +60,27 @@ export function VideoSlider({
     document.removeEventListener("touchend", handleDragEnd);
   };
 
-  console.log("drawerHeight", drawerHeight);
+  const increaseLoveCount = async (video: SupaTypes.Tables<'videos'>) => {
+    const currentLoves = video.loves || [];
+
+    const isUserLoved = currentLoves.find((love) => love === session?.user.user_metadata.username)
+    const newLoves = isUserLoved
+      ? currentLoves.filter((love) => love !== session?.user.user_metadata.username)
+      : [...currentLoves, session?.user.user_metadata.username]
+
+    await supabase.from("videos").update({
+      loves: newLoves,
+    }).eq("id", eventData.id);
+  }
+
+  const shareEvent = async () => {
+    await navigator.share({
+      title: eventData.name,
+      text: eventData.description,
+      url: window.location.href,
+    }).then(() => toast.success("Event shared successfully"))
+      .catch((error) => toast.error("Error sharing event: " + error));
+  }
 
   return (
     <div className="min-h-screen">
@@ -85,6 +115,7 @@ export function VideoSlider({
                 <VideoThumbnail
                   key={video.id}
                   video={video}
+                  eventData={eventData}
                   onSelect={() => setSelectedVideo(video)}
                 />
               ))
@@ -100,34 +131,22 @@ export function VideoSlider({
         open={!!selectedVideo}
         onOpenChange={() => setSelectedVideo(null)}
       >
-        <DialogContent className="video-wrapper p-0 max-w-[92.666%] max-h-[92.666%] flex items-center justify-center bg-black">
-          {selectedVideo && (
-            // biome-ignore lint/a11y/useMediaCaption: <explanation>
-            <video
-              src={selectedVideo.source}
-              className="video-preview rounded-lg"
-              controls
-              autoPlay
-              playsInline
-            />
-          )}
-          <DialogClose>
-            {/* biome-ignore lint/a11y/noSvgWithoutTitle: <explanation> */}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
+        <DialogContent className="p-0 max-w-[92.666%] max-h-[92.666%] flex items-center justify-center bg-black">
+          <DialogDescription className="relative w-full h-full flex items-center flex-1 justify-center">
+            {selectedVideo && (
+              // biome-ignore lint/a11y/useMediaCaption: <explanation>
+              <VideoUI
+                error={error}
+                eventData={eventData}
+                video={selectedVideo}
+                previewUrl={selectedVideo.source}
+                streamerVideoRef={videoRef}
+                onShareAction={shareEvent}
+                onToggleAiNarrator={() => console.log("Toggle AI narrator")}
+                onLikeAction={() => increaseLoveCount(selectedVideo)}
               />
-            </svg>
-          </DialogClose>
+            )}
+          </DialogDescription>
         </DialogContent>
       </Dialog>
     </div>
@@ -136,8 +155,12 @@ export function VideoSlider({
 
 function VideoThumbnail({
   video,
+  eventData,
   onSelect,
-}: { video: Videos; onSelect: () => void }) {
+}: { video: Videos; eventData: SupaTypes.Tables<'events'>; onSelect: () => void }) {
+  const supabase = createClient();
+  const session = useSession();
+  const [error, setError] = useState('');
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isInView, setIsInView] = useState(false);
 
@@ -164,25 +187,65 @@ function VideoThumbnail({
     if (videoRef.current) {
       if (isInView) {
         videoRef.current.play();
+
+        const timeout = setTimeout(() => {
+          const currentViews = video.views || [];
+          const isAlreadyViewed = currentViews.find((view) => view === session?.user.user_metadata.username)
+
+          if (isAlreadyViewed) return clearTimeout(timeout)
+
+          const newViews = [...currentViews, session?.user.user_metadata.username]
+
+          supabase.from("videos").update({
+            views: newViews,
+          }).eq("id", eventData.id);
+        }, 5000)
+
+        return () => clearTimeout(timeout);
       } else {
         videoRef.current.pause();
       }
     }
   }, [isInView]);
 
+  const increaseLoveCount = async () => {
+    const currentLoves = video.loves || [];
+
+    const isUserLoved = currentLoves.find((love) => love === session?.user.user_metadata.username)
+    const newLoves = isUserLoved
+      ? currentLoves.filter((love) => love !== session?.user.user_metadata.username)
+      : [...currentLoves, session?.user.user_metadata.username]
+
+    await supabase.from("videos").update({
+      loves: newLoves,
+    }).eq("id", eventData.id);
+  }
+
+  const shareEvent = async () => {
+    await navigator.share({
+      title: eventData.name,
+      text: eventData.description,
+      url: window.location.href,
+    }).then(() => toast.success("Event shared successfully"))
+      .catch((error) => toast.error("Error sharing event: " + error));
+  }
+
   return (
     // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
     <div className="relative aspect-[9/16]" onClick={onSelect}>
-      <video
-        ref={videoRef}
-        src={video.source}
-        className="w-full h-full object-cover"
-        loop
-        muted
-        playsInline
+      <VideoUI
+        video={video}
+        error={error}
+        eventData={eventData}
+        previewUrl={video.source}
+        streamerVideoRef={videoRef}
+        onToggleAiNarrator={() => console.log("Toggle AI narrator")}
+        onShareAction={shareEvent}
+        onLikeAction={increaseLoveCount}
       />
-      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black to-transparent">
-        <h3 className="text-white text-sm truncate">{video.description}</h3>
+      <div className="absolute -bottom-2 left-0 right-0 pb-1 pt-3 px-2 bg-gradient-to-t from-black to-transparent line-clamp-2">
+        <h3 className="text-white text-sm truncate">@{video.username}</h3>
+        <p>{video.description}</p>
       </div>
     </div>
   );

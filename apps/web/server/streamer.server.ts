@@ -30,7 +30,10 @@ export class Streamer {
     });
   }
 
-  private async joinRoom(socket: Socket, roomId: string) {
+  private async joinRoom(
+    socket: Socket,
+    { roomId, username }: { roomId: string; username: string }
+  ) {
     await socket.join(roomId);
     console.log(`User ${socket.id} joined room ${roomId}`);
 
@@ -39,7 +42,8 @@ export class Streamer {
     if (streamerIds) {
       for (const streamerId of streamerIds) {
         if (streamerId !== socket.id) {
-          socket.to(streamerId).emit("viewer-joined", socket.id);
+          const viewers = this.io.sockets.adapter.rooms.get(roomId)?.size || 0;
+          socket.to(streamerId).emit("viewer-joined", { viewers, username });
         }
       }
     }
@@ -58,9 +62,12 @@ export class Streamer {
     }
     this.streamers.get(roomId)?.add(socket.id);
     socket.to(roomId).emit("start-stream", { streamId, username });
-    console.log(
-      `User ${username} ${socket.id} started stream ${streamId} in room ${roomId}`
-    );
+    // console.log(
+    //   `User ${username} ${socket.id} started stream ${streamId} in room ${roomId}`
+    // );
+    // update watchers count
+    const viewers = this.io.sockets.adapter.rooms.get(roomId)?.size || 0;
+    this.io.to(roomId).emit("viewer-joined", { viewers, username });
   }
 
   private endStream(
@@ -73,9 +80,14 @@ export class Streamer {
   ) {
     this.streamers.get(roomId)?.delete(socket.id);
     socket.to(roomId).emit("end-stream", { streamId, username });
-    console.log(
-      `User ${username} ${socket.id} ended stream ${streamId} in room ${roomId}`
-    );
+    // console.log(
+    //   `User ${username} ${socket.id} ended stream ${streamId} in room ${roomId}`
+    // );
+    // update watchers count
+    const viewers = this.io.sockets.adapter.rooms.get(roomId)?.size || 0;
+    this.io
+      .to(roomId)
+      .emit("viewer-joined", { viewers, streamerId: socket.id });
   }
 
   private disconnect(socket: Socket) {
@@ -86,7 +98,7 @@ export class Streamer {
         console.log(`Stream ended in room ${roomId} due to disconnection`);
       }
     }
-    console.log("User disconnected", socket.id);
+    // console.log("User disconnected", socket.id);
   }
 
   private streamChunk(
@@ -103,9 +115,9 @@ export class Streamer {
       username: string;
     }
   ) {
-    console.log(
-      `Broadcasting stream chunk to room ${roomId} from stream ${streamId}`
-    );
+    // console.log(
+    //   `Broadcasting stream chunk to room ${roomId} from stream ${streamId}`
+    // );
     socket
       .to(roomId)
       .emit("stream-chunk", { roomId, streamId, chunk, username });

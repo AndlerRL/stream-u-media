@@ -3,9 +3,10 @@
 import { EventCardDrawer } from "@/components/pages/event-card-drawer";
 import { CameraControls } from "@/components/shared/camera-controls";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { defaultVideoConstraints } from "@/lib/constants/events";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/utils/supabase/client";
 import type { SupaTypes } from "@services/supabase";
 import { useSession } from "@supabase/auth-helpers-react";
 import {
@@ -13,6 +14,7 @@ import {
   CircleStopIcon,
   CircleXIcon,
   Disc3Icon,
+  EyeIcon,
   HeartIcon,
   PodcastIcon,
   ShareIcon,
@@ -38,7 +40,9 @@ const defaultAvatar = (seed = 'MintMoment') =>
   `https://api.dicebear.com/9.x/adventurer/svg?seed=${seed}`;
 
 export function VideoUI({
+  video,
   eventData,
+  viewersCount,
   streamerUsername,
   error,
   previewUrl,
@@ -58,7 +62,7 @@ export function VideoUI({
   onStreamingStart,
   onStreamingStop,
 }: VideoUIPropsWithStreamer) {
-  const session = useSession();
+  const supabase = createClient();
   const [uiState, setState] = useSetState<{
     drawers: {
       openProfile: boolean;
@@ -69,6 +73,7 @@ export function VideoUI({
   }>(defaultState);
   const [controlsState, setControls] = useSetState<VideoStreamControlState>(defaultVideoConstraints);
   const navigatorRef = useRef<Navigator>();
+  const session = useSession()
 
   useEffect(() => {
     if (!streamerVideoRef.current || !streamMediaRef?.current || !isStreamStart) return;
@@ -132,7 +137,7 @@ export function VideoUI({
       },
       openAi: {
         title: "AI Narrator",
-        description: "Enable AI Narrator to describe the stream...",
+        description: "Enable AI Narrator to describe the stream is coming soon!",
         action: "Enable AI Narrator",
       },
     };
@@ -140,7 +145,33 @@ export function VideoUI({
     return data[drawer];
   };
 
-  console.log("drawerOpen", drawerOpen);
+  useEffect(() => {
+    if (!video) return;
+
+    // update video views by reading current username session
+    // ? We wait to update because the user is watching the video at this point, so we first check if it is playing
+    const currentViews = video.views || [];
+    const isAlreadyViewed = currentViews.find((view) => view === session?.user.user_metadata.username);
+
+    if (isAlreadyViewed) return;
+
+    const newViews = [...currentViews, session?.user.user_metadata.username];
+
+    let timeout: any;
+
+    if (streamerVideoRef?.current?.paused) {
+      clearTimeout(timeout);
+    } else {
+      timeout = setTimeout(async () => {
+        // update video views
+        await supabase.from("videos").update({
+          views: newViews,
+        }).eq("id", video.id);
+      }, 5000);
+    }
+
+    return () => clearTimeout(timeout);
+  }, [streamerVideoRef?.current?.paused]);
 
   useEffect(() => {
     if (navigatorRef.current) return;
@@ -224,9 +255,6 @@ export function VideoUI({
     }
   }
 
-  console.log('isStreamStart', isStreamStart)
-  console.log('streamerVideoRef?.current', streamerVideoRef?.current)
-
   return (
     <section
       className={cn("video-wrapper", { "max-h-[110%]": !isStreamStart })}
@@ -235,12 +263,14 @@ export function VideoUI({
 
       <video
         className={cn("video-preview", {
-          hidden: previewUrl && !isStreaming && streamer,
+          hidden: !isStreaming && streamer,
         })}
         ref={streamerVideoRef}
+        src={previewUrl}
         playsInline
         autoPlay
-        muted={streamer || controlsState.muted}
+        loop={Boolean(video)}
+        muted={video ? true : streamer || controlsState.muted}
       />
 
       {!streamer && !isStreamStart && (
@@ -249,7 +279,7 @@ export function VideoUI({
         </div>
       )}
 
-      {streamer && (
+      {streamer && streamMediaRef?.current && (
         <CameraControls
           controls={controlsState}
           onControlHandler={toggleControlOption}
@@ -282,15 +312,30 @@ export function VideoUI({
 
       {/* Right Side CTAs */}
       <div className="controls controls--social h-1/2 md:h-1/3">
-        {!streamer && (
+        {!streamer && !video && (
           <Button size="icon" variant="ghost" onClick={() => toggleControlOption('sound')}>
             {!controlsState.muted ? <Volume2Icon className="h-8 w-8 text-foreground" /> : <VolumeOffIcon className="h-8 w-8 text-foreground" />}
           </Button>
         )}
-        <Button size="icon" variant="ghost" onClick={onLikeAction}>
-          <HeartIcon className="h-8 w-8 text-foreground" />
-        </Button>
-        <span className="text-xs font-extrabold drop-shadow-lg">100k</span>
+        <div className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), 'bg-transparent hover:bg-transparent')}>
+          <EyeIcon className={cn("h-8 w-8 text-foreground", { "size-4": Boolean(video), })} />
+        </div>
+        <span
+          className={cn("text-xs font-extrabold drop-shadow-lg", {
+            hidden: streamer,
+          })}
+        >
+          {viewersCount || video?.views?.length || 0}
+        </span>
+
+        {video && (
+          <>
+            <Button size="icon" variant="ghost" className="size-auto p-3" onClick={onLikeAction}>
+              <HeartIcon className={cn(" h-8 w-8 text-foreground", { "size-4": Boolean(video), })} />
+            </Button>
+            <span className="text-xs font-extrabold drop-shadow-lg">{video?.loves?.length || 0}</span>
+          </>
+        )}
 
         {/* <Button
           size="icon"
@@ -304,37 +349,36 @@ export function VideoUI({
         <Button
           size="icon"
           variant="ghost"
-          className={cn({ hidden: streamer })}
-          onClick={() => toggleDrawer("openShare")}
-        >
-          <ShareIcon className="h-8 w-8 text-foreground" />
-        </Button>
-        <span
-          className={cn("text-xs font-extrabold drop-shadow-lg", {
+          className={cn("size-auto p-3", {
             hidden: streamer,
           })}
+          onClick={onShareAction}
         >
-          500
-        </span>
+          <ShareIcon className={cn("h-8 w-8 text-foreground", { "size-4": Boolean(video), })} />
+        </Button>
 
         <Button
           size="icon"
           variant="ghost"
-          className="relative"
+          className="relative size-auto p-3"
           onClick={() => toggleDrawer("openAi")}
         >
           <Disc3Icon
             className={cn("h-8 w-8 text-foreground", {
               "animate-spin": isStreamStart || streamer,
+              "size-4": Boolean(video),
             })}
           />
-          <SparklesIcon className="absolute -top-1.5 right-0 h-5 w-5 text-foreground" />
+          <SparklesIcon className={cn("absolute -top-1.5 right-0 h-5 w-5 text-foreground", {
+            "size-3 top-1.5 right-1.5": Boolean(video),
+          })} />
         </Button>
       </div>
 
-      {!streamer ? (
-        <>
-          {/* Comments Section
+      {
+        !streamer && !video ? (
+          <>
+            {/* Comments Section
           <div className="controls controls--social__comments">
             <div className="flex items-center space-x-2 mb-4">
               <Avatar className="h-8 w-8">
@@ -358,50 +402,53 @@ export function VideoUI({
             </div>
           </div> */}
 
-          {/* Recording Controls */}
-          <div className="controls controls--recording">
-            <Button onClick={onNewRecording} size="icon" className="px-10 size-auto font-bold text-lg">
-              <span className="sr-only">Start New Recording</span>
-              STREAM <PodcastIcon className="size-16" />
-            </Button>
-          </div>
-        </>
-      ) : null}
+            {/* Recording Controls */}
+            <div className="controls controls--recording">
+              <Button onClick={onNewRecording} size="icon" className="px-10 size-auto font-bold text-lg">
+                <span className="sr-only">Start New Recording</span>
+                STREAM <PodcastIcon className="size-16" />
+              </Button>
+            </div>
+          </>
+        ) : null
+      }
 
-      {streamer && (
-        <div className="controls controls--recording">
-          {!isStreaming ? (
-            <>
-              <Button onClick={onStreamingStart} variant="ghost" size="icon" className="size-auto">
-                <span className="sr-only">Start Streaming and Recording</span>
-                <CirclePlayIcon className="size-28" />
-              </Button>
-              <Button onClick={onCancelStream} variant="ghost" size="icon" className="size-auto">
-                <span className="sr-only">Cancel stream</span>
-                <CircleXIcon className="size-8 text-destructive" />
-              </Button>
-              {!isUploading && previewUrl && (
-                <Button onClick={onStreamingStop} size="lg" className="text-lg">
-                  Upload
-                  <UploadIcon className="size-8" />
+      {
+        streamer && (
+          <div className="controls controls--recording">
+            {!isStreaming ? (
+              <>
+                <Button onClick={onStreamingStart} variant="ghost" size="icon" className="size-auto">
+                  <span className="sr-only">Start Streaming and Recording</span>
+                  <CirclePlayIcon className="size-28" />
                 </Button>
-              )}
-            </>
-          ) : (
-            <Button onClick={onStreamingStop} variant="ghost" size="icon" className="size-auto">
-              <span className="sr-only">Stop Streaming and Recording</span>
-              <CircleStopIcon className="size-28 text-destructive" />
-            </Button>
-          )}
-        </div>
-      )}
+                <Button onClick={onCancelStream} variant="ghost" size="icon" className="size-auto">
+                  <span className="sr-only">Cancel stream</span>
+                  <CircleXIcon className="size-8 text-destructive" />
+                </Button>
+                {!isUploading && previewUrl && (
+                  <Button onClick={onStreamingStop} size="lg" className="text-lg">
+                    Upload
+                    <UploadIcon className="size-8" />
+                  </Button>
+                )}
+              </>
+            ) : (
+              <Button onClick={onStreamingStop} variant="ghost" size="icon" className="size-auto">
+                <span className="sr-only">Stop Streaming and Recording</span>
+                <CircleStopIcon className="size-28 text-destructive" />
+              </Button>
+            )}
+          </div>
+        )
+      }
 
       <EventCardDrawer
         onClose={() => setState(defaultState)}
         open={Boolean(drawerOpen)}
         drawerData={drawerOpen ? mockUpDrawerData(drawerOpen) : undefined}
       />
-    </section>
+    </section >
   );
 }
 
@@ -409,6 +456,8 @@ export interface VideoUIProps {
   eventData: SupaTypes.Tables<"events">;
   error: string | null;
   streamerVideoRef: React.RefObject<HTMLVideoElement>;
+  video?: SupaTypes.Tables<"videos">;
+  viewersCount?: number;
   streamMediaRef?: React.RefObject<MediaStream>;
   previewUrl?: string;
   isStreaming?: boolean;
@@ -430,26 +479,24 @@ export interface VideoUIProps {
 export type RequiredIfStreamer<
   T extends {
     isUploading?: boolean;
+    viewersCount?: number;
     streamMediaRef?: React.RefObject<MediaStream>;
     mediaRecorderRef?: React.RefObject<MediaRecorder>;
     onStreamingStart?: VideoUIProps["onStreamingStart"];
     onCancelStream?: VideoUIProps["onCancelStream"];
     onStreamingStop?: VideoUIProps["onStreamingStop"];
-    onOpenChat?: VideoUIProps["onOpenChat"];
-    onOpenAvatar?: VideoUIProps["onOpenAvatar"];
     onToggleAiNarrator?: VideoUIProps["onToggleAiNarrator"];
   },
 > = T & { streamer: true } & Required<
   Pick<
     T,
     | "isUploading"
+    | "viewersCount"
     | "onStreamingStart"
     | "onCancelStream"
     | "mediaRecorderRef"
     | "onStreamingStop"
     | "streamMediaRef"
-    | "onOpenChat"
-    | "onOpenAvatar"
     | "onToggleAiNarrator"
   >
 >;
@@ -457,6 +504,7 @@ export type RequiredIfStreamer<
 export type RequiredIfNotStreamer<
   T extends {
     streamerUsername?: string;
+    viewersCount?: number;
     onNewRecording?: VideoUIProps["onNewRecording"];
     onOpenChat?: VideoUIProps["onOpenChat"];
     onOpenAvatar?: VideoUIProps["onOpenAvatar"];
@@ -468,6 +516,7 @@ export type RequiredIfNotStreamer<
   Pick<
     T,
     | "streamerUsername"
+    | "viewersCount"
     | "onNewRecording"
     | "onOpenChat"
     | "onOpenAvatar"
@@ -477,9 +526,28 @@ export type RequiredIfNotStreamer<
   >
 >;
 
+export type RequiredIfThumbnail<
+  T extends {
+    previewUrl?: string;
+    video?: VideoUIProps["video"];
+    onLikeAction?: VideoUIProps["onLikeAction"];
+    onShareAction?: VideoUIProps["onShareAction"];
+    onToggleAiNarrator?: VideoUIProps["onToggleAiNarrator"];
+  },
+> = T & Required<Pick<
+  T,
+  | "previewUrl"
+  | "video"
+  | "onLikeAction"
+  | "onShareAction"
+  | "onToggleAiNarrator"
+>
+>;
+
 export type VideoUIPropsWithStreamer =
   | RequiredIfNotStreamer<VideoUIProps>
-  | RequiredIfStreamer<VideoUIProps>;
+  | RequiredIfStreamer<VideoUIProps>
+  | RequiredIfThumbnail<VideoUIProps>;
 
 export type VideoStreamControlOption = 'sound' | 'flash' | 'camera-swipe' | 'camera-zoom-in' | 'camera-zoom-out';
 export type VideoStreamControlState = {

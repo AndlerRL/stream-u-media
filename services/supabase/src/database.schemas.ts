@@ -120,11 +120,12 @@ export const videosRowSchema = z.object({
   description: z.string().nullable(),
   event_id: z.number(),
   id: z.number(),
-  loves: z.number(),
+  loves: z.array(z.string()).nullable(),
   source: z.string(),
   tags_id: z.array(z.number()),
   user_id: z.string(),
   username: z.string().nullable(),
+  views: z.array(z.string()).nullable(),
 });
 
 export const videosInsertSchema = z.object({
@@ -132,11 +133,12 @@ export const videosInsertSchema = z.object({
   description: z.string().optional().nullable(),
   event_id: z.number(),
   id: z.number().optional(),
-  loves: z.number().optional(),
+  loves: z.array(z.string()).optional().nullable(),
   source: z.string(),
   tags_id: z.array(z.number()),
   user_id: z.string(),
   username: z.string().optional().nullable(),
+  views: z.array(z.string()).optional().nullable(),
 });
 
 export const videosUpdateSchema = z.object({
@@ -144,11 +146,12 @@ export const videosUpdateSchema = z.object({
   description: z.string().optional().nullable(),
   event_id: z.number().optional(),
   id: z.number().optional(),
-  loves: z.number().optional(),
+  loves: z.array(z.string()).optional().nullable(),
   source: z.string().optional(),
   tags_id: z.array(z.number()).optional(),
   user_id: z.string().optional(),
   username: z.string().optional().nullable(),
+  views: z.array(z.string()).optional().nullable(),
 });
 
 export const videosRelationshipsSchema = z.tuple([

@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   const token = reqSearchParams.get("token") ?? "";
   const email = reqSearchParams.get("email") ?? "";
   const type = reqSearchParams.get("type") as EmailOtpType | null;
-  const next = reqSearchParams.get("redirect_to") ?? "/";
+  const next = `/${reqSearchParams.get("redirect_to") ?? ""}`;
 
   console.log("reqSearchParams -> ", reqSearchParams.toString());
 

@@ -121,33 +121,36 @@ export type Database = {
           description: string | null;
           event_id: number;
           id: number;
-          loves: number;
+          loves: string[] | null;
           source: string;
           tags_id: number[];
           user_id: string;
           username: string | null;
+          views: string[] | null;
         };
         Insert: {
           created_at?: string;
           description?: string | null;
           event_id: number;
           id?: number;
-          loves?: number;
+          loves?: string[] | null;
           source: string;
           tags_id: number[];
           user_id: string;
           username?: string | null;
+          views?: string[] | null;
         };
         Update: {
           created_at?: string;
           description?: string | null;
           event_id?: number;
           id?: number;
-          loves?: number;
+          loves?: string[] | null;
           source?: string;
           tags_id?: number[];
           user_id?: string;
           username?: string | null;
+          views?: string[] | null;
         };
         Relationships: [
           {

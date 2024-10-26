@@ -29,12 +29,14 @@ export function VideoRecorder({
   onVideoUploaded,
   onCancelStream,
 }: VideoRecorderProps) {
+  // TODO: refactor to user react-use useSetState
   const [isStreaming, setIsStreaming] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>();
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [description, setDescription] = useState<string>('');
   const [manualDescription, setManualDescription] = useState(false);
+  const [viewersCount, setViewersCount] = useState(0);
 
   const streamerVideoRef = useRef<HTMLVideoElement>(null);
   const streamMediaRef = useRef<MediaStream | null>(null);
@@ -62,10 +64,10 @@ export function VideoRecorder({
       socketRef.current?.emit("join-room", eventData.id);
     });
 
-    socketRef.current.on("viewer-joined", (viewerId) => {
-      console.log("Viewer joined:", viewerId);
-      // You might want to do something when a viewer joins, like sending initial stream data
-      toast.info(`Viewer joined the stream: ${viewerId}`);
+    socketRef.current.on("viewer-joined", ({ username, viewers }) => {
+      // console.log("Viewer joined:", username);
+      setViewersCount(viewers);
+      toast.info(`${username} joined to the stream.`);
     });
 
     return () => {
@@ -164,7 +166,7 @@ export function VideoRecorder({
 
       mediaRecorder.onstop = createPreview;
       mediaRecorderRef.current = mediaRecorder;
-      mediaRecorder.start(140); // Collect data every second
+      mediaRecorder.start(500); // Collect data every half second
       setPreviewUrl(undefined); // Clear any existing preview
     } catch (err) {
       console.error("Error starting stream and recording:", err);
@@ -292,16 +294,13 @@ export function VideoRecorder({
         previewUrl={previewUrl}
         isUploading={isUploading}
         isStreaming={isStreaming}
+        viewersCount={viewersCount}
         streamMediaRef={streamMediaRef}
         mediaRecorderRef={mediaRecorderRef}
         streamerVideoRef={streamerVideoRef}
         onCancelStream={onCancelStream}
         onStreamingStop={stopStreamingAndRecording}
         onStreamingStart={startStreamingAndRecording}
-        onOpenChat={() => console.log("Open chat")}
-        onOpenAvatar={() => console.log("Open avatar")}
-        onLikeAction={() => console.log("Like action")}
-        onShareAction={() => console.log("Share action")}
         onToggleAiNarrator={() => console.log("Toggle AI narrator")}
         streamer
       />
