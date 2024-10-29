@@ -1,7 +1,7 @@
 import { EventsPageComponent } from "@/components/pages/events";
 import { useServerSession } from "@/lib/hooks/use-session.server";
+import { createClient } from "@/lib/supabase/server";
 import { getUserEventsData } from "@/services/supabase-client.service";
-import { createClient } from "@/utils/supabase/server";
 
 export default async function EventsPage() {
   const supabase = await createClient();

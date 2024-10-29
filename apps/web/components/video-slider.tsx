@@ -3,7 +3,8 @@
 import { VideoUI } from "@/components/shared/video-ui";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { createClient } from "@/utils/supabase/client";
+import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 import { DialogDescription } from "@radix-ui/react-dialog";
 import type { SupaTypes } from "@services/supabase";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -69,10 +70,10 @@ export function VideoSlider({
       : [...currentLoves, session?.user.user_metadata.username]
 
     await supabase.from("videos")
-    .update({
-      loves: newLoves,
-    })
-    .eq("id", video.id);
+      .update({
+        loves: newLoves,
+      })
+      .eq("id", video.id);
   }
 
   const shareEvent = async () => {
@@ -210,41 +211,20 @@ function VideoThumbnail({
     }
   }, [isInView]);
 
-  const increaseLoveCount = async () => {
-    const currentLoves = video.loves || [];
-
-    const isUserLoved = currentLoves.find((love) => love === session?.user.user_metadata.username)
-    const newLoves = isUserLoved
-      ? currentLoves.filter((love) => love !== session?.user.user_metadata.username)
-      : [...currentLoves, session?.user.user_metadata.username]
-
-    await supabase.from("videos").update({
-      loves: newLoves,
-    }).eq("id", video.id);
-  }
-
-  const shareEvent = async () => {
-    await navigator.share({
-      title: eventData.name,
-      text: eventData.description,
-      url: window.location.href,
-    }).then(() => toast.success("Event shared successfully"))
-      .catch((error) => toast.error("Error sharing event: " + error));
-  }
-
   return (
     // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
     <div className="relative aspect-[9/16]" onClick={onSelect}>
-      <VideoUI
-        video={video}
-        error={error}
-        eventData={eventData}
-        previewUrl={video.source}
-        streamerVideoRef={videoRef}
-        onToggleAiNarrator={() => console.log("Toggle AI narrator")}
-        onShareAction={shareEvent}
-        onLikeAction={increaseLoveCount}
+      <video
+        ref={videoRef}
+        className="absolute inset-0 w-full h-full object-cover"
+        src={video.source}
+        onError={() => setError('Error loading video')}
+        muted
+        playsInline
+        autoPlay
+        loop
       />
+      <div className={cn("transition-all duration-300 absolute inset-0 bg-black bg-opacity-50", { 'bg-opacity-0': isInView })} />
       <div className="absolute -bottom-2 left-0 right-0 pb-1 pt-3 px-2 bg-gradient-to-t from-black to-transparent line-clamp-2">
         <h3 className="text-white text-sm truncate">@{video.username}</h3>
         <p>{video.description}</p>

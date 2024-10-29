@@ -13,7 +13,7 @@ import {
   CommandList,
   CommandShortcut,
 } from "@/components/ui/command";
-import { createClient } from "@/utils/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import type { SupaTypes } from "@services/supabase";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useAsync } from "react-use";

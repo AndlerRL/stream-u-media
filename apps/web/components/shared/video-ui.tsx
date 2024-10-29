@@ -6,8 +6,8 @@ import { Countdown } from "@/components/shared/countdown";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { defaultVideoConstraints } from "@/lib/constants/events";
+import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import { createClient } from "@/utils/supabase/client";
 import type { SupaTypes } from "@services/supabase";
 import { useSession } from "@supabase/auth-helpers-react";
 import {
@@ -80,6 +80,7 @@ export function VideoUI({
     if (!streamerVideoRef.current || !streamMediaRef?.current) return;
 
     streamerVideoRef.current.srcObject = streamMediaRef.current;
+    streamerVideoRef.current.play().catch(console.error);
   }, [streamerVideoRef?.current, streamMediaRef?.current]);
 
   const drawerOpen = Object.keys(uiState.drawers).find(
@@ -283,7 +284,7 @@ export function VideoUI({
         <CameraControls
           controls={controlsState}
           onControlHandler={toggleControlOption}
-          
+
           streamMediaRef={streamMediaRef}
           streamerVideoRef={streamerVideoRef}
         />

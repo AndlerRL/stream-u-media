@@ -1,8 +1,8 @@
 'use client'
 
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import { createClient } from "@/utils/supabase/client";
 import { SessionContextProvider, useSession } from "@supabase/auth-helpers-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";

@@ -7,8 +7,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader } from "@/components/
 import { Input, inputBaseClasses } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { defaultVideoConstraints } from "@/lib/constants/events";
+import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import { createClient } from "@/utils/supabase/client";
 import { DialogDescription } from "@radix-ui/react-dialog";
 import type { SupaTypes } from "@services/supabase";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -77,6 +77,10 @@ export function VideoRecorder({
   }, [eventData.id]);
 
   const startMediaStream = async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setError("Media devices not available");
+      return;
+    }
     console.log("Starting media stream");
     const videoConfig = defaultVideoConstraints.video;
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -97,14 +101,14 @@ export function VideoRecorder({
     startMediaStream();
 
     return () => {
-      if (streamMediaRef.current) {
+      if (streamMediaRef.current && previewUrl) {
         stopStreamingAndRecording();
       }
 
       setIsUploading(false);
       setIsStreaming(false);
     }
-  }, []);
+  }, [streamerVideoRef.current]);
 
   const startStreamingAndRecording = async () => {
     if (!session?.user.id || !eventData.id) {

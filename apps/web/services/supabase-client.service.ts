@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import type { SupaTypes } from "@services/supabase";
 
 const supabase = createClient();

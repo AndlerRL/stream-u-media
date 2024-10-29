@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "sonner";
