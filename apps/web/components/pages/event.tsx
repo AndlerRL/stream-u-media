@@ -284,7 +284,7 @@ export function EventPageComponent({ params, search }: { params: { slug: string 
   }
 
   return (
-    <RootLayoutComponent className="top-0">
+    <RootLayoutComponent className="top-0 pt-0">
       <Link href="/events" className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), 'absolute top-5 left-5 z-50')}>
         <ArrowLeftIcon className="size-12" />
       </Link>

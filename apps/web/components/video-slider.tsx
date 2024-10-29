@@ -224,7 +224,7 @@ function VideoThumbnail({
         autoPlay
         loop
       />
-      <div className={cn("transition-all duration-300 absolute inset-0 bg-black bg-opacity-50", { 'bg-opacity-0': isInView })} />
+      <div className={cn("transition-all duration-[412ms] absolute inset-0 bg-black bg-opacity-60", { 'bg-opacity-0': isInView })} />
       <div className="absolute -bottom-2 left-0 right-0 pb-1 pt-3 px-2 bg-gradient-to-t from-black to-transparent line-clamp-2">
         <h3 className="text-white text-sm truncate">@{video.username}</h3>
         <p>{video.description}</p>
