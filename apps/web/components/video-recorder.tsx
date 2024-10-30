@@ -39,7 +39,7 @@ export function VideoRecorder({
   const [viewersCount, setViewersCount] = useState(0);
   const [isPosting, setIsPosting] = useState(false);
 
-  const streamerVideoRef = useRef<HTMLVideoElement | null>(null);
+  const streamerVideoRef = useRef<HTMLVideoElement>(null);
   const streamMediaRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);

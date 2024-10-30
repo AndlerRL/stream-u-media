@@ -481,7 +481,7 @@ export function VideoUI({
 export interface VideoUIProps {
   eventData: SupaTypes.Tables<"events">;
   error: string | null;
-  streamerVideoRef: React.RefObject<HTMLVideoElement | null>;
+  streamerVideoRef: React.RefObject<HTMLVideoElement>;
   video?: SupaTypes.Tables<"videos">;
   viewersCount?: number;
   streamMediaRef?: React.RefObject<MediaStream | null>;
