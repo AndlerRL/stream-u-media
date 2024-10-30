@@ -67,7 +67,7 @@ export class Streamer {
     // );
     // update watchers count
     const viewers = this.io.sockets.adapter.rooms.get(roomId)?.size || 0;
-    this.io.to(roomId).emit("viewer-joined", { viewers, username });
+    socket.to(roomId).emit("viewer-joined", { viewers, username });
   }
 
   private endStream(
@@ -85,16 +85,14 @@ export class Streamer {
     // );
     // update watchers count
     const viewers = this.io.sockets.adapter.rooms.get(roomId)?.size || 0;
-    this.io
-      .to(roomId)
-      .emit("viewer-joined", { viewers, streamerId: socket.id });
+    socket.to(roomId).emit("viewer-joined", { viewers, streamerId: socket.id });
   }
 
   private disconnect(socket: Socket) {
     for (const [roomId, streamers] of this.streamers.entries()) {
       if (streamers.has(socket.id)) {
         streamers.delete(socket.id);
-        this.io.to(roomId).emit("end-stream", { streamId: socket.id }); // Use a proper streamId in production
+        socket.to(roomId).emit("end-stream", { streamId: socket.id }); // Use a proper streamId in production
         console.log(`Stream ended in room ${roomId} due to disconnection`);
       }
     }

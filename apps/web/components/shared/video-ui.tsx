@@ -24,7 +24,7 @@ import {
   Volume2Icon,
   VolumeOffIcon
 } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSetState } from "react-use";
 
 const defaultState = {
@@ -58,6 +58,7 @@ export function VideoUI({
   onOpenChat,
   onShareAction,
   onToggleAiNarrator,
+  updateStreamMediaRef,
   onNewRecording,
   onCancelStream,
   onStreamingStart,
@@ -73,14 +74,14 @@ export function VideoUI({
     }
   }>(defaultState);
   const [controlsState, setControls] = useSetState<VideoStreamControlState>(defaultVideoConstraints);
-  const navigatorRef = useRef<Navigator>();
+  const [videoToggleFullDescription, setVideoToggleFullDescription] = useState(false);
+  const navigatorRef = useRef<Navigator | null>(null);
   const session = useSession()
 
   useEffect(() => {
     if (!streamerVideoRef.current || !streamMediaRef?.current) return;
 
     streamerVideoRef.current.srcObject = streamMediaRef.current;
-    streamerVideoRef.current.play().catch(console.error);
   }, [streamerVideoRef?.current, streamMediaRef?.current]);
 
   const drawerOpen = Object.keys(uiState.drawers).find(
@@ -246,7 +247,7 @@ export function VideoUI({
           audio: true,
         });
 
-        streamerVideoRef.current.srcObject = stream;
+        if (updateStreamMediaRef) updateStreamMediaRef(stream);
 
         setControls({ video: { ...controlsState.video, facingMode: newFacingMode } });
         break;
@@ -258,7 +259,7 @@ export function VideoUI({
   }
 
   return (
-    <section
+    <div
       className={cn("video-wrapper", { "max-h-[110%]": !isStreamStart })}
     >
       {error && <div className="error">{error}</div>}
@@ -284,7 +285,6 @@ export function VideoUI({
         <CameraControls
           controls={controlsState}
           onControlHandler={toggleControlOption}
-
           streamMediaRef={streamMediaRef}
           streamerVideoRef={streamerVideoRef}
         />
@@ -309,6 +309,27 @@ export function VideoUI({
             />
             <AvatarFallback>UN</AvatarFallback>
           </Avatar>
+        </div>
+      )}
+
+      {video && (
+        <div className="controls controls--video-details">
+          <Avatar
+            className="size-14 border-2 bg-accent"
+            onClick={() => toggleDrawer("openProfile")}
+          >
+            <AvatarImage
+              src={defaultAvatar(video.username as string)}
+              alt={`@${video.username}`}
+            />
+            <AvatarFallback>UN</AvatarFallback>
+          </Avatar>
+          <div role="button" className="flex flex-col gap-1 text-left" onClick={() => setVideoToggleFullDescription(prev => !prev)}>
+            <p className="font-bold text-lg w-full">@{video.username || 'usr_not_found'}</p>
+            <p className={cn('text-sm w-full', { 'line-clamp-2': !videoToggleFullDescription })}>
+              {video.description}
+            </p>
+          </div>
         </div>
       )}
 
@@ -453,23 +474,24 @@ export function VideoUI({
         open={Boolean(drawerOpen)}
         drawerData={drawerOpen ? mockUpDrawerData(drawerOpen) : undefined}
       />
-    </section >
+    </div >
   );
 }
 
 export interface VideoUIProps {
   eventData: SupaTypes.Tables<"events">;
   error: string | null;
-  streamerVideoRef: React.RefObject<HTMLVideoElement>;
+  streamerVideoRef: React.RefObject<HTMLVideoElement | null>;
   video?: SupaTypes.Tables<"videos">;
   viewersCount?: number;
-  streamMediaRef?: React.RefObject<MediaStream>;
+  streamMediaRef?: React.RefObject<MediaStream | null>;
   previewUrl?: string;
   isStreaming?: boolean;
   isStreamStart?: boolean;
   streamer?: boolean;
   isUploading?: boolean;
   streamerUsername?: string;
+  updateStreamMediaRef?: (stream: MediaStream) => void;
   onCancelStream?: () => void;
   onNewRecording?: () => void;
   onStreamingStart?: () => Promise<void>;
@@ -485,8 +507,9 @@ export type RequiredIfStreamer<
   T extends {
     isUploading?: boolean;
     viewersCount?: number;
-    streamMediaRef?: React.RefObject<MediaStream>;
-    mediaRecorderRef?: React.RefObject<MediaRecorder>;
+    streamMediaRef?: React.RefObject<MediaStream | null>;
+    mediaRecorderRef?: React.RefObject<MediaRecorder | null>;
+    updateStreamMediaRef?: VideoUIProps["updateStreamMediaRef"];
     onStreamingStart?: VideoUIProps["onStreamingStart"];
     onCancelStream?: VideoUIProps["onCancelStream"];
     onStreamingStop?: VideoUIProps["onStreamingStop"];
@@ -498,6 +521,7 @@ export type RequiredIfStreamer<
     | "isUploading"
     | "viewersCount"
     | "onStreamingStart"
+    | "updateStreamMediaRef"
     | "onCancelStream"
     | "mediaRecorderRef"
     | "onStreamingStop"

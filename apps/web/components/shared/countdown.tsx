@@ -3,10 +3,9 @@ import { useEffect, useState } from "react";
 type CountdownProps = {
   initialTime: number;
   onEnd: () => void;
-  formatTime?: (time: number) => string;
 };
 
-export function Countdown({ initialTime, onEnd, formatTime }: CountdownProps) {
+export function Countdown({ initialTime, onEnd }: CountdownProps) {
   const [timeLeft, setTimeLeft] = useState(initialTime);
 
   useEffect(() => {
@@ -22,11 +21,15 @@ export function Countdown({ initialTime, onEnd, formatTime }: CountdownProps) {
     return () => clearInterval(timerId);
   }, [timeLeft, onEnd]);
 
-  const displayTime = formatTime ? formatTime(timeLeft) : timeLeft;
+  const displayFormattedTime = () => {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  };
 
   return (
     <div className="countdown">
-      <p className="time-display">00:{displayTime}</p>
+      <p className="time-display">{displayFormattedTime()}</p>
       {/* <Button onClick={() => setTimeLeft(initialTime)}>Reset</Button> */}
     </div>
   );
