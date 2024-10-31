@@ -13,7 +13,7 @@ import { DialogDescription } from "@radix-ui/react-dialog";
 import type { SupaTypes } from "@services/supabase";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useChat } from 'ai/react';
-import { UploadIcon, WandSparklesIcon } from "lucide-react";
+import { UploadIcon, WandSparklesIcon, XIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type Socket, io } from "socket.io-client";
 import { toast } from "sonner";
@@ -37,7 +37,7 @@ export function VideoRecorder({
   const [description, setDescription] = useState<string>('');
   const [manualDescription, setManualDescription] = useState(false);
   const [viewersCount, setViewersCount] = useState(0);
-  const [videoConfig, setVideoConfig] = useState(defaultVideoConstraints.video);
+  const [isPosting, setIsPosting] = useState(false);
 
   const streamerVideoRef = useRef<HTMLVideoElement>(null);
   const streamMediaRef = useRef<MediaStream | null>(null);
@@ -120,8 +120,6 @@ export function VideoRecorder({
       setError("No media stream available");
       return;
     }
-
-    startMediaStream();
 
     try {
       // Create a stream record in Supabase
@@ -224,6 +222,7 @@ export function VideoRecorder({
 
   const uploadVideo = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setIsPosting(true);
 
     const formData = new FormData(event.currentTarget);
 
@@ -258,8 +257,19 @@ export function VideoRecorder({
     } catch (err) {
       console.error("Error uploading video:", err);
       setError("Failed to upload video");
+    } finally {
+      setIsPosting(false);
+      toast.success("Video posted successfully!");
     }
   };
+
+  const updateStreamMediaRef = (stream: MediaStream) => {
+    streamMediaRef.current = stream
+
+    if (streamerVideoRef.current) {
+      streamerVideoRef.current.srcObject = streamMediaRef.current;
+    }
+  }
 
   const generateDescription = async () => {
     const content = description || `I just finished streaming this event: ${eventData.name}!`;
@@ -295,6 +305,7 @@ export function VideoRecorder({
         mediaRecorderRef={mediaRecorderRef}
         streamerVideoRef={streamerVideoRef}
         onCancelStream={onCancelStream}
+        updateStreamMediaRef={updateStreamMediaRef}
         onStreamingStop={stopStreamingAndRecording}
         onStreamingStart={startStreamingAndRecording}
         onToggleAiNarrator={() => console.log("Toggle AI narrator")}
@@ -319,7 +330,7 @@ export function VideoRecorder({
                 />
                 <AvatarFallback>UN</AvatarFallback>
               </Avatar>
-              <p className="font-bold text-sm w-full">@{session?.user.user_metadata.username}</p>
+              <p className="font-bold text-sm">@{session?.user.user_metadata.username}</p>
             </div>
           </DialogHeader>
           <DialogDescription className="px-6">
@@ -359,11 +370,24 @@ export function VideoRecorder({
               />
             </form>
           </DialogDescription>
-          <DialogFooter className="p-6 w-full flex !justify-evenly">
-            <Button type="button" variant="destructive" size="lg" onClick={() => setIsUploading(false)}>Cancel</Button>
-            <Button type="submit" form="new-video-upload" size="lg" className="text-lg">
-              Upload
-              <UploadIcon className="size-8" />
+          <DialogFooter className="p-6 w-full flex flex-row gap-4 !justify-evenly">
+            {/* loader spinner */}
+            <Button type="button" variant="destructive" size="lg" onClick={() => !isPosting && setIsUploading(false)}>
+              Cancel
+              <XIcon className="size-8" />
+            </Button>
+            <Button type="submit" form="new-video-upload" size="lg" disabled={isPosting}>
+              {isPosting ? (
+                <>
+                  Posting
+                  <div className="size-6 border-[3px] border-t-transparent border-accent-foreground rounded-full animate-spin" />
+                </>
+              ) : (
+                <>
+                  Post
+                  <UploadIcon className="size-8" />
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

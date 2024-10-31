@@ -3,7 +3,7 @@
 }
 
 .video-preview {
-  @apply h-full w-full object-cover z-0;
+  @apply h-full w-full object-cover z-10;
 
   &.video-preview--no-video {
     @apply flex items-center justify-center z-0;
@@ -23,6 +23,9 @@
   &.controls--streamer-details {
     @apply text-background justify-end items-start gap-4 top-0 right-0 left-0 px-4 py-10 bg-gradient-to-b from-accent-foreground/50 to-accent/10 w-full;
   }
+  &.controls--video-details {
+    @apply justify-start items-start gap-4 top-0 right-0 left-0 px-4 py-4 bg-gradient-to-b from-accent-foreground/50 to-accent/10 w-full z-[0];
+  }
   &.controls--social__comments {
     @apply flex-col bottom-0 pb-16 pt-12 left-0 right-0 bg-opacity-50 px-4 bg-gradient-to-t from-foreground to-foreground/30 text-background;
   }
@@ -39,9 +42,9 @@
 }
 
 .countdown {
-  @apply absolute bottom-[85%] right-[40%] p-4 text-destructive font-mono;
+  @apply absolute bottom-[-50%] right-[41%] px-3 py-0 font-mono bg-destructive/60 border border-destructive rounded-sm text-destructive-foreground;
 }
 
 .time-display {
-  @apply text-3xl font-extrabold leading-loose tracking-wider;
+  @apply text-lg font-extrabold leading-loose tracking-wider;
 }
