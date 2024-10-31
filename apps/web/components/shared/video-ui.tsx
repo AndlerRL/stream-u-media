@@ -80,8 +80,7 @@ export function VideoUI({
     if (!streamerVideoRef.current || !streamMediaRef?.current) return;
 
     streamerVideoRef.current.srcObject = streamMediaRef.current;
-    streamerVideoRef.current.play().catch(console.error);
-  }, [streamerVideoRef?.current, streamMediaRef?.current]);
+  }, [streamMediaRef?.current]);
 
   const drawerOpen = Object.keys(uiState.drawers).find(
     (key) => uiState.drawers[key as keyof typeof uiState.drawers],
@@ -210,7 +209,7 @@ export function VideoUI({
         break;
       }
       case 'camera-zoom-in': {
-        const newZoomLevel = Math.min(controlsState.video.zoom + 0.3, 4); // Max zoom level 4x
+        const newZoomLevel = Math.min(controlsState.video.zoom + 0.4, 4); // Max zoom level 4x
 
         await videoTrack.applyConstraints({
           // @ts-ignore
@@ -220,7 +219,7 @@ export function VideoUI({
         break;
       }
       case 'camera-zoom-out': {
-        const newZoomLevel = Math.max(controlsState.video.zoom - 0.3, 0.7); // Min zoom level 1x
+        const newZoomLevel = Math.max(controlsState.video.zoom - 0.4, 0.7); // Min zoom level 0.7x
 
         await videoTrack.applyConstraints({
           // @ts-ignore
@@ -240,6 +239,8 @@ export function VideoUI({
             track.stop();
           }
         }
+        streamerVideoRef.current.srcObject = null;
+        // TODO: Use the new facing mode from a hook instead of the current state (so as the video recorder and streamer can be in sync)
         const newFacingMode = controlsState.video.facingMode === "user" ? "environment" : "user";
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: newFacingMode },

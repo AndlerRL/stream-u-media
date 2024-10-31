@@ -14,9 +14,10 @@ import type { SupaTypes } from "@services/supabase";
 import { useSession } from "@supabase/auth-helpers-react";
 import omit from "lodash.omit";
 import { AtSignIcon, FacebookIcon, InstagramIcon, UserCircleIcon } from "lucide-react";
+import { signIn, useSession as useSocialSession } from 'next-auth/react';
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAsync } from "react-use";
 import { toast } from "sonner";
 
@@ -36,6 +37,7 @@ function EventsComponent({
   events: SupaTypes.Tables<"events">[]
 }) {
   const session = useSession();
+  const socialSession = useSocialSession();
   const supabase = createClient();
 
   const {
@@ -67,27 +69,36 @@ function EventsComponent({
     .subscribe();
 
 
-  const userData = Object.keys(
-    omit(session?.user.user_metadata, [
-      "avatar",
-      "sub",
-      "avatar",
-      "phone_verified",
-      "email_verified",
-    ]),
-  );
+  const userData =
+    Object.keys(
+      omit(session?.user.user_metadata, [
+        "avatar",
+        "sub",
+        "avatar",
+        "phone_verified",
+        "email_verified",
+      ]),
+    );
 
-  if (!session?.user.user_metadata.instagram) {
+  if (!userData.includes('instagram')) {
     userData.push("instagram");
   }
-  if (!session?.user.user_metadata.facebook) {
+  if (!userData.includes('facebook')) {
     userData.push("facebook");
   }
-  if (!session?.user.user_metadata.twitter) {
+  if (!userData.includes('twitter')) {
     userData.push("twitter");
   }
 
+  useEffect(() => {
+    return () => {
+      usersEventsSubscription.unsubscribe();
+    };
+  }, [])
+
   const connectSocialMedia = async (provider: 'twitter' | 'facebook' | 'instagram') => {
+    signIn(provider);
+
     switch (provider) {
       case 'twitter':
         toast.info('Connecting Twitter Coming Soon! 🏗️');
@@ -116,8 +127,10 @@ function EventsComponent({
     email: <AtSignIcon className="size-4" />,
     username: <UserCircleIcon className="size-4" />,
   };
+
   const availableUserData = userData.filter((key) => session?.user && key in session.user.user_metadata);
   const unavailableUserData = userData.filter((key) => !(session?.user && key in session.user.user_metadata));
+  const expiredSocialSessionData = userData.filter(key => !key.match(/(username|email)/g)).filter((key) => !(socialSession.data?.user && key in socialSession.data.user));
 
   return (
     <ScrollArea className="flex-1 w-full flex flex-col gap-12 px-4">
@@ -125,7 +138,7 @@ function EventsComponent({
         <Card className="flex flex-col items-start justify-center relative w-full pr-44">
           <CardHeader>
             <CardTitle className="font-bold text-2xl mb-4">
-              Tu Presencia
+              Your Presence
             </CardTitle>
             <Avatar className="size-40 absolute top-3 bg-muted bottom-0 right-4 border-2">
               <AvatarImage
@@ -147,16 +160,9 @@ function EventsComponent({
                       <span>{session?.user.user_metadata[key]}</span>
                     </li>
                   ) : (
-                    <li key={key} className="flex gap-2">
-                      <span
-                        className={cn(
-                          buttonVariants({ variant: "ghost" }),
-                          "p-0 size-6",
-                        )}
-                      >
-                        <span className="sr-only">{key}</span>
-                        {userInfoIcons[key as keyof typeof userInfoIcons]}
-                      </span>
+                    <li key={key} className={cn("transition-all flex items-center gap-2", { 'opacity-30': expiredSocialSessionData.includes(key) })}>
+                      <span className="font-bold">{userInfoIcons[key as keyof typeof userInfoIcons]}</span>
+                      <span>{session?.user.user_metadata[key].name}{expiredSocialSessionData.includes(key) ? " (session exp.)" : ""}</span>
                     </li>
                   );
                 })}
@@ -179,14 +185,14 @@ function EventsComponent({
                   })}
               </div>
             </ul>
-            {unavailableUserData.length && (
+            {expiredSocialSessionData.length && (
               <div className="w-full flex flex-col gap-2 mt-12 mb-4">
                 <h3 className="font-semibold w-full text-lg">
                   {/* Connect your media for instant sharing! */}
-                  Conecta tus redes para compartir al instante!
+                  Connect your social media for instant share!
                 </h3>
                 <div className="flex items-center gap-4 justify-start w-full">
-                  {unavailableUserData.map((key) => (
+                  {expiredSocialSessionData.map((key) => (
                     <Button
                       key={key}
                       variant="ghost"

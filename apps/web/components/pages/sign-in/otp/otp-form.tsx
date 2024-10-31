@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import {
   InputOTP,
   InputOTPGroup,
@@ -10,6 +11,7 @@ import type { AuthSearchParams } from "@/types/auth";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 export function OTPForm({ query }: { query?: AuthSearchParams }) {
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -36,13 +38,12 @@ export function OTPForm({ query }: { query?: AuthSearchParams }) {
       // dispatch the action event to call the API
       buttonRef.current?.click();
 
-      // reset the OTP field
-      setOtp("");
+      toast.success("OTP is complete. Calling API...");
     }
   }, [otp, buttonRef.current]);
 
   return (
-    <form action="/auth/confirm">
+    <form action="/auth/confirm" className="flex flex-col gap-4">
       <input type="hidden" name="type" value="email" />
       <input type="hidden" name="email" value={query?.email || ""} />
       <input type="hidden" name="redirect_to" value={query?.redirect_to || "events"} />
@@ -68,9 +69,9 @@ export function OTPForm({ query }: { query?: AuthSearchParams }) {
           <InputOTPSlot index={5} />
         </InputOTPGroup>
       </InputOTP>
-      <button type="submit" ref={buttonRef}>
+      <Button type="submit" ref={buttonRef}>
         Verify OTP
-      </button>
+      </Button>
     </form>
   );
 }

@@ -7,15 +7,11 @@ import { redirect } from "next/navigation";
 
 export async function GET(request: NextRequest) {
   const { searchParams: reqSearchParams } = new URL(request.url);
+  const origin = request.headers.get("origin") ?? process.env.APP_URL;
   const token = reqSearchParams.get("token") ?? "";
   const email = reqSearchParams.get("email") ?? "";
   const type = reqSearchParams.get("type") as EmailOtpType | null;
-  let next = `${process.env.APP_URL}${reqSearchParams.get("redirect_to") ?? ""}`;
-
-  // if (next.match(/^\/events\/.*/g)) {
-  if (next.includes("/events/eth-pura-vida")) {
-    next = `${next.includes("?") ? "&" : "?"}reg=true`;
-  }
+  const next = reqSearchParams.get("redirect_to") ?? "";
 
   console.log("reqSearchParams -> ", reqSearchParams.toString());
 
@@ -58,7 +54,7 @@ export async function GET(request: NextRequest) {
 
     if (!error) {
       // redirect user to specified redirect URL or root of app
-      redirect(next);
+      redirect(next.includes("http") ? next : origin + next);
     }
   }
 

@@ -19,10 +19,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const supabase = await createClient();
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  // console.log('🐕‍🦺 session [GLOBAL] --> ', session);
+  // console.log('🐕‍🦺 session [GLOBAL] --> ', user);
 
   return (
     <html lang="en">

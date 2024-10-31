@@ -4,8 +4,11 @@ import { ThemeSwitcher } from "@/components/theme-switcher";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { SessionContextProvider, useSession } from "@supabase/auth-helpers-react";
+import { SessionProvider } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Suspense } from "react";
+import { useAsync } from "react-use";
 
 export function RootLayoutComponent({
   children,
@@ -13,12 +16,22 @@ export function RootLayoutComponent({
   style
 }: { children: React.ReactNode, className?: string, style?: React.CSSProperties }) {
   const supabaseClient = createClient();
+  const { value, loading, error } = useAsync(async () => {
+    return await supabaseClient.auth.getSession()
+  }, [])
+
+  const userSession = { user: value?.data.session?.user, expires: new Date(value?.data.session?.expires_at as number) }
+
   return (
-    <SessionContextProvider supabaseClient={supabaseClient}>
-      <RootLayoutContentComponent className={className} style={style}>
-        {children}
-      </RootLayoutContentComponent>
-    </SessionContextProvider>
+    <Suspense fallback={<div>Loading user data...</div>}>
+      <SessionContextProvider supabaseClient={supabaseClient} initialSession={value?.data.session}>
+        <SessionProvider>
+          <RootLayoutContentComponent className={className} style={style}>
+            {children}
+          </RootLayoutContentComponent>
+        </SessionProvider>
+      </SessionContextProvider>
+    </Suspense>
   )
 }
 

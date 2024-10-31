@@ -37,6 +37,7 @@ export function VideoRecorder({
   const [description, setDescription] = useState<string>('');
   const [manualDescription, setManualDescription] = useState(false);
   const [viewersCount, setViewersCount] = useState(0);
+  const [videoConfig, setVideoConfig] = useState(defaultVideoConstraints.video);
 
   const streamerVideoRef = useRef<HTMLVideoElement>(null);
   const streamMediaRef = useRef<MediaStream | null>(null);
