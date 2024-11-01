@@ -1,3 +1,4 @@
+import { Providers } from "@/app/providers";
 import { createClient } from "@/lib/supabase/server";
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import NextTopLoader from "nextjs-toploader";
@@ -29,7 +30,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="flex flex-col w-full justify-start items-center">
         <NextThemesProvider defaultTheme="system">
           <NextTopLoader initialPosition={0.16333} />
-          {children}
+          <Providers>
+            {children}
+          </Providers>
           <Toaster
             position="top-center"
             toastOptions={{

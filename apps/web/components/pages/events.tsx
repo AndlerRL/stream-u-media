@@ -7,14 +7,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useClientSession } from "@/lib/hooks/use-session.client";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { getAllEvents, getUserEventsData } from "@/services/supabase-client.service";
 import type { SupaTypes } from "@services/supabase";
-import { useSession } from "@supabase/auth-helpers-react";
 import omit from "lodash.omit";
 import { AtSignIcon, FacebookIcon, InstagramIcon, UserCircleIcon } from "lucide-react";
-import { signIn, useSession as useSocialSession } from 'next-auth/react';
+import { signIn } from 'next-auth/react';
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -36,9 +36,8 @@ function EventsComponent({
 }: {
   events: SupaTypes.Tables<"events">[]
 }) {
-  const session = useSession();
-  const socialSession = useSocialSession();
   const supabase = createClient();
+  const { session, socialSession } = useClientSession()
 
   const {
     value: allEvents,
@@ -55,7 +54,7 @@ function EventsComponent({
         event: "*",
         schema: "public",
         table: "users_events",
-        filter: `user_id=eq.${session?.user.id}`,
+        filter: `user_id=eq.${session?.id}`,
       },
       async (payload) => {
         // console.log("Change received!", payload);
@@ -71,7 +70,7 @@ function EventsComponent({
 
   const userData =
     Object.keys(
-      omit(session?.user.user_metadata, [
+      omit(session?.user_metadata, [
         "avatar",
         "sub",
         "avatar",
@@ -121,15 +120,15 @@ function EventsComponent({
     facebook: <FacebookIcon className="size-6" />,
   };
   const userInfoIcons = {
-    twitter: <XitterIcon className="size-3" />,
+    twitter: <XitterIcon className="size-4 p-[0.1rem]" />,
     instagram: <InstagramIcon className="size-4" />,
     facebook: <FacebookIcon className="size-4" />,
     email: <AtSignIcon className="size-4" />,
     username: <UserCircleIcon className="size-4" />,
   };
 
-  const availableUserData = userData.filter((key) => session?.user && key in session.user.user_metadata);
-  const unavailableUserData = userData.filter((key) => !(session?.user && key in session.user.user_metadata));
+  const availableUserData = userData.filter((key) => session && key in session.user_metadata);
+  const unavailableUserData = userData.filter((key) => !(session && key in session.user_metadata));
   const expiredSocialSessionData = userData.filter(key => !key.match(/(username|email)/g)).filter((key) => !(socialSession.data?.user && key in socialSession.data.user));
 
   return (
@@ -142,11 +141,11 @@ function EventsComponent({
             </CardTitle>
             <Avatar className="size-40 absolute top-3 bg-muted bottom-0 right-4 border-2">
               <AvatarImage
-                src={session?.user.user_metadata.avatar}
-                alt={session?.user.email || "User Avatar"}
+                src={session?.user_metadata.avatar}
+                alt={session?.email || "User Avatar"}
               />
               <AvatarFallback>
-                {session?.user.user_metadata.username?.slice(0, 2)}
+                {session?.user_metadata.username?.slice(0, 2)}
               </AvatarFallback>
             </Avatar>
           </CardHeader>
@@ -157,12 +156,12 @@ function EventsComponent({
                   return !key.match(/(facebook|instagram|twitter)/g) ? (
                     <li key={key} className="flex items-center gap-2">
                       <span className="font-bold">{userInfoIcons[key as keyof typeof userInfoIcons]}</span>
-                      <span>{session?.user.user_metadata[key]}</span>
+                      <span>{session?.user_metadata[key]}</span>
                     </li>
                   ) : (
                     <li key={key} className={cn("transition-all flex items-center gap-2", { 'opacity-30': expiredSocialSessionData.includes(key) })}>
                       <span className="font-bold">{userInfoIcons[key as keyof typeof userInfoIcons]}</span>
-                      <span>{session?.user.user_metadata[key].name}{expiredSocialSessionData.includes(key) ? " (session exp.)" : ""}</span>
+                      <span>{session?.user_metadata[key].name}{expiredSocialSessionData.includes(key) ? " (session exp.)" : ""}</span>
                     </li>
                   );
                 })}

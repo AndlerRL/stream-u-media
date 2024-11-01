@@ -1,11 +1,47 @@
+import { instagramFetchInterceptor } from "@/lib/auth/instagram-fetch.interceptor";
 import { useServerSession } from "@/lib/hooks/use-session.server";
 import { createClient } from "@/lib/supabase/server";
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import FacebookProvider from "next-auth/providers/facebook";
 import InstagramProvider from "next-auth/providers/instagram";
 import TwitterProvider from "next-auth/providers/twitter";
+import { NextRequest, NextResponse } from "next/server";
 
-const options = {
+const originalFetch = fetch;
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      name?: string;
+      email?: string;
+      image?: string;
+      facebook?: {
+        name?: string;
+        email?: string;
+        picture?: string;
+        access_token?: string;
+        expires_at?: number;
+      };
+      twitter?: {
+        name?: string;
+        email?: string;
+        picture?: string;
+        access_token?: string;
+        expires_at?: number;
+      };
+      instagram?: {
+        name?: string;
+        email?: string;
+        picture?: string;
+        access_token?: string;
+        expires_at?: number;
+      };
+    };
+  }
+}
+
+const options: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET || '',
   providers: [
     FacebookProvider({
       clientId: process.env.FACEBOOK_CLIENT_ID || "",
@@ -14,10 +50,13 @@ const options = {
     TwitterProvider({
       clientId: process.env.TWITTER_CLIENT_ID || "",
       clientSecret: process.env.TWITTER_CLIENT_SECRET || "",
+      version: '2.0'
     }),
     InstagramProvider({
       clientId: process.env.INSTAGRAM_CLIENT_ID || "",
       clientSecret: process.env.INSTAGRAM_CLIENT_SECRET || "",
+      // authorization: 'https://api.instagram.com/oauth/authorize?scope=business_basic%2Cbusiness_content_publish',
+      authorization: 'https://api.instagram.com/oauth/authorize?scope=user_profile,user_media',
     }),
   ],
   callbacks: {
@@ -51,11 +90,17 @@ const options = {
       return token;
     },
     async session({ session, token }) {
+      session.user = {
+        ...session.user,
+        facebook: undefined,
+        twitter: undefined,
+        instagram: undefined,
+      };
       const user = {
-        name: token.name,
-        email: token.email,
-        picture: token.picture,
-        access_token: token.access_token,
+        name: token.name ?? undefined,
+        email: token.email ?? undefined,
+        picture: token.picture ?? undefined,
+        access_token: token.access_token as string,
       };
 
       if (token.facebook) {
@@ -73,4 +118,26 @@ const options = {
 
 const handler = await NextAuth(options);
 
-export { handler as GET, handler as POST };
+export { handler as POST };
+
+  // ? Shouldn't this be POST instead? 🤔
+export async function GET(req: NextRequest, res: NextResponse): Promise<NextResponse> {
+  const url = new URL(req.url);
+
+  if (url.pathname === "/api/auth/callback/instagram") {
+    const { session } = await useServerSession();
+    if (!session) {
+      /* Prevent user creation for instagram access token */
+      const signInUrl = new URL("/?modal=sign-in", req.url);
+      return NextResponse.redirect(signInUrl);
+    }
+
+     /* Intercept the fetch request to patch access_token request to be oauth compliant */
+    global.fetch = instagramFetchInterceptor(originalFetch);
+    const response = await GET(req, res);
+    global.fetch = originalFetch;
+    return response;
+  }
+
+  return await handler(req, res) as NextResponse;
+}

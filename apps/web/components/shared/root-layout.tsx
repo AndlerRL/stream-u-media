@@ -1,36 +1,32 @@
 'use client'
 
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import { createClient } from "@/lib/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { SessionContextProvider, useSession } from "@supabase/auth-helpers-react";
-import { SessionProvider } from "next-auth/react";
+import { useSession } from "@supabase/auth-helpers-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
-import { useAsync } from "react-use";
 
 export function RootLayoutComponent({
   children,
   className,
   style
 }: { children: React.ReactNode, className?: string, style?: React.CSSProperties }) {
-  const supabaseClient = createClient();
-  const { value, loading, error } = useAsync(async () => {
-    return await supabaseClient.auth.getSession()
-  }, [])
-
-  const userSession = { user: value?.data.session?.user, expires: new Date(value?.data.session?.expires_at as number) }
-
   return (
-    <Suspense fallback={<div>Loading user data...</div>}>
-      <SessionContextProvider supabaseClient={supabaseClient} initialSession={value?.data.session}>
-        <SessionProvider>
-          <RootLayoutContentComponent className={className} style={style}>
-            {children}
-          </RootLayoutContentComponent>
-        </SessionProvider>
-      </SessionContextProvider>
+    <Suspense fallback={(
+      <Skeleton className="layout-container">
+        <Skeleton className="h-[350px] w-full" />
+        <div className="flex flex-col gap-4">
+          <Skeleton className="h-8 w-2/3" />
+          <Skeleton className="h-8 w-2/3" />
+          <Skeleton className="h-8 w-2/3" />
+        </div>
+      </Skeleton>
+    )}>
+      <RootLayoutContentComponent className={className} style={style}>
+        {children}
+      </RootLayoutContentComponent>
     </Suspense>
   )
 }
