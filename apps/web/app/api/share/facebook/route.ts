@@ -11,6 +11,6 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json({ success: true, data: response.data });
   } catch (error) {
-    return NextResponse.json({ success: false, error: error.message });
+    return NextResponse.json({ success: false, error: (error as Error).message });
   }
 }

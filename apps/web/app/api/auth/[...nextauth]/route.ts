@@ -1,11 +1,9 @@
-import { instagramFetchInterceptor } from "@/lib/auth/instagram-fetch.interceptor";
 import { useServerSession } from "@/lib/hooks/use-session.server";
 import { createClient } from "@/lib/supabase/server";
 import NextAuth, { NextAuthOptions } from "next-auth";
 import FacebookProvider from "next-auth/providers/facebook";
 import InstagramProvider from "next-auth/providers/instagram";
 import TwitterProvider from "next-auth/providers/twitter";
-import { NextRequest, NextResponse } from "next/server";
 
 const originalFetch = fetch;
 
@@ -118,26 +116,26 @@ const options: NextAuthOptions = {
 
 const handler = await NextAuth(options);
 
-export { handler as POST };
+export { handler as GET, handler as POST };
 
   // ? Shouldn't this be POST instead? 🤔
-export async function GET(req: NextRequest, res: NextResponse): Promise<NextResponse> {
-  const url = new URL(req.url);
+// export async function GET(req: NextRequest, res: NextResponse): Promise<NextResponse> {
+//   const url = new URL(req.url);
 
-  if (url.pathname === "/api/auth/callback/instagram") {
-    const { session } = await useServerSession();
-    if (!session) {
-      /* Prevent user creation for instagram access token */
-      const signInUrl = new URL("/?modal=sign-in", req.url);
-      return NextResponse.redirect(signInUrl);
-    }
+//   if (url.pathname === "/api/auth/callback/instagram") {
+//     const { session } = await useServerSession();
+//     if (!session) {
+//       /* Prevent user creation for instagram access token */
+//       const signInUrl = new URL("/?modal=sign-in", req.url);
+//       return NextResponse.redirect(signInUrl);
+//     }
 
-     /* Intercept the fetch request to patch access_token request to be oauth compliant */
-    global.fetch = instagramFetchInterceptor(originalFetch);
-    const response = await GET(req, res);
-    global.fetch = originalFetch;
-    return response;
-  }
+//      /* Intercept the fetch request to patch access_token request to be oauth compliant */
+//     global.fetch = instagramFetchInterceptor(originalFetch);
+//     const response = await GET(req, res);
+//     global.fetch = originalFetch;
+//     return response;
+//   }
 
-  return await handler(req, res) as NextResponse;
-}
+//   return await handler(req, res) as NextResponse;
+// }
