@@ -38,7 +38,7 @@ export function LoginComponent({
 							value={JSON.stringify(searchParams)}
 						/>
 						<Label htmlFor="email">Email</Label>
-						<Input name="email" placeholder="you@example.com" required />
+						<Input name="email" type="email" spellCheck={false} placeholder="you@example.com" required />
 						{/* <div className="flex justify-between items-center">
 						<Label htmlFor="password">Password</Label>
 						<Link
